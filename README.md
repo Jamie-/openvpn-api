@@ -1,6 +1,7 @@
 # OpenVPN Management Interface Python API
 
 [![Build Status](https://travis-ci.org/Jamie-/openvpn-api.svg?branch=master)](https://travis-ci.org/Jamie-/openvpn-api)
+![PyPI](https://img.shields.io/pypi/v/openvpn-api.svg)
 
 ## Summary
 
@@ -18,14 +19,25 @@ This project requires Python 3.6 or later.
 
 ## Installation
 
+#### Via PyPI
+```
+pip install openvpn-api
+```
+
+#### Via Source
+```
+git clone https://github.com/Jamie-/openvpn-api.git
+cd openvpn-api
+python setup.py install
+```
 
 ## Usage
 
 ### Introduction
 Create a `VPN` object for your management interface connection.
 ```python
-from openvpn_api.vpn import VPN
-v = VPN('localhost', 7505)
+import openvpn_api.VPN
+v = openvpn_api.VPN('localhost', 7505)
 ```
 
 Then you can either manage connection and disconnection yourself
