@@ -75,7 +75,13 @@ or
 'socket'
 ```
 
-These are represented by the `VPNType` class as `VPNType.IP` or `VPNType.UNIX_SOCKET`, which resides indide the `vpn` module.
+These are represented by the `VPNType` class as `VPNType.IP` or `VPNType.UNIX_SOCKET`
+```python
+>>> v.type
+'ip'
+>>> v.type == openvpn_api.VPNType.IP
+True
+```
 
 ### Daemon Interaction
 All the properties that get information about the OpenVPN service you're connected to are stateful.
