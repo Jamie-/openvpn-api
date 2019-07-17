@@ -2,7 +2,7 @@ import unittest
 import datetime
 from unittest.mock import patch, PropertyMock
 from openvpn_api.vpn import VPN, VPNType
-from openvpn_api.util.errors import MonitorError, ParseError
+from openvpn_api.util.errors import VPNError, ParseError
 
 
 class TestVPNModel(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestVPNModel(unittest.TestCase):
     """
 
     def test_host_port_socket(self):
-        with self.assertRaises(MonitorError) as ctx:
+        with self.assertRaises(VPNError) as ctx:
             VPN(host='localhost', port=1234, socket='file.sock')
         self.assertEqual('Must specify either socket or host and port', str(ctx.exception))
 

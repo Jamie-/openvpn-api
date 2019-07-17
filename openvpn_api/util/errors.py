@@ -1,17 +1,17 @@
 
-class MonitorError(Exception):
+class VPNError(Exception):
     """Base exception for all other project exceptions.
     """
     pass
 
 
-class InvalidConfigError(MonitorError):
+class InvalidConfigError(VPNError):
     """Invalid config provided.
     """
     pass
 
 
-class ParseError(MonitorError):
+class ParseError(VPNError):
     """Exception for all management interface parsing errors.
     """
     pass

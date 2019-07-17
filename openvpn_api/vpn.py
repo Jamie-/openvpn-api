@@ -4,7 +4,7 @@ import re
 import contextlib
 import openvpn_status
 import openvpn_api.util as util
-from openvpn_api.util.errors import MonitorError, ParseError
+from openvpn_api.util.errors import VPNError, ParseError
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
 
@@ -36,7 +36,7 @@ class VPN:
                  port=None,
                  socket=None):
         if (socket and host) or (socket and port) or (not socket and not host and not port):
-            raise MonitorError('Must specify either socket or host and port')
+            raise VPNError('Must specify either socket or host and port')
         if socket:
             self._mgmt_socket = socket
             self._type = VPNType.UNIX_SOCKET
