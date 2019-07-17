@@ -1,5 +1,5 @@
 import unittest
-import util
+import openvpn_api.util as util
 
 
 class TestUtilCore(unittest.TestCase):

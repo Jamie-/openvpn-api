@@ -1,12 +1,12 @@
 import unittest
 import datetime
-import models.state
+import openvpn_api.models.state
 
 
 class TestState(unittest.TestCase):
 
     def test_init(self):
-        s = models.state.State(
+        s = openvpn_api.models.state.State(
             '1560719601',
             'CONNECTED',
             'SUCCESS',
@@ -30,7 +30,7 @@ class TestState(unittest.TestCase):
         self.assertEqual('server', s.mode)
 
     def test_init_none(self):
-        s = models.state.State(None, None, None, None, None, None, None, None, None)
+        s = openvpn_api.models.state.State(None, None, None, None, None, None, None, None, None)
         self.assertIsNone(s.up_since)
         self.assertIsNone(s.state_name)
         self.assertIsNone(s.desc_string)

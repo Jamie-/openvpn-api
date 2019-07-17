@@ -1,8 +1,8 @@
 import unittest
 import datetime
 from unittest.mock import patch, PropertyMock
-from vpn import VPN, VPNType
-from util.errors import MonitorError, ParseError
+from openvpn_api.vpn import VPN, VPNType
+from openvpn_api.util.errors import MonitorError, ParseError
 
 
 class TestVPNModel(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestVPNModel(unittest.TestCase):
         vpn.name = 'asd_asd'
         self.assertEqual(vpn.anchor, 'asd_asd')
 
-    @patch('vpn.VPN.send_command')
+    @patch('openvpn_api.vpn.VPN.send_command')
     def test__get_version(self, mock_send_command):
         vpn = VPN(host='localhost', port=1234)
         mock_send_command.return_value = """
@@ -65,7 +65,7 @@ END
         mock_send_command.assert_called_once_with('version')
         mock_send_command.reset_mock()
 
-    @patch('vpn.VPN._get_version')
+    @patch('openvpn_api.vpn.VPN._get_version')
     def test_release(self, mock_get_version):
         vpn = VPN(host='localhost', port=1234)
         self.assertIsNone(vpn._release)
@@ -79,7 +79,7 @@ END
         self.assertEqual(vpn.release, 'asd')
         mock_get_version.assert_not_called()
 
-    @patch('vpn.VPN._get_version')
+    @patch('openvpn_api.vpn.VPN._get_version')
     def test_version(self, mock_get_version):
         vpn = VPN(host='localhost', port=1234)
         vpn._release = 'OpenVPN 2.4.4 x86_64-pc-linux-gnu [SSL (OpenSSL)] [LZO] [LZ4] [EPOLL] [PKCS11] [MH/PKTINFO] [AEAD] built on Sep  5 2018'
@@ -100,7 +100,7 @@ END
         self.assertEqual('Unable to parse version from release string.', str(ctx.exception))
         mock_get_version.assert_not_called()
 
-    @patch('vpn.VPN.send_command')
+    @patch('openvpn_api.vpn.VPN.send_command')
     def test_server_state(self, mock):
         vpn = VPN(host='localhost', port=1234)
         mock.return_value = """1560719601,CONNECTED,SUCCESS,10.0.0.1,,,1.2.3.4,1194
@@ -120,8 +120,8 @@ END"""
         _ = vpn.state
         mock.assert_not_called()
 
-    @patch('vpn.VPN.release', new_callable=PropertyMock)
-    @patch('vpn.VPN.state', new_callable=PropertyMock)
+    @patch('openvpn_api.vpn.VPN.release', new_callable=PropertyMock)
+    @patch('openvpn_api.vpn.VPN.state', new_callable=PropertyMock)
     def test_cache(self, release_mock, state_mock):
         """Test caching VPN metadata works and clears correctly.
         """
@@ -135,7 +135,7 @@ END"""
         self.assertIsNone(vpn._release)
         self.assertIsNone(vpn._state)
 
-    @patch('vpn.VPN.send_command')
+    @patch('openvpn_api.vpn.VPN.send_command')
     def test_get_stats(self, mock):
         # Normal response from send_command
         vpn = VPN(host='localhost', port=1234)

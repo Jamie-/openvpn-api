@@ -3,10 +3,10 @@ import socket
 import re
 import contextlib
 import openvpn_status
-import util
-from util.errors import MonitorError, ParseError
-from models.state import State
-from models.stats import ServerStats
+import openvpn_api.util as util
+from openvpn_api.util.errors import MonitorError, ParseError
+from openvpn_api.models.state import State
+from openvpn_api.models.stats import ServerStats
 
 logger = logging.getLogger(__name__)
 
