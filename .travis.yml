@@ -7,4 +7,5 @@ python:
   - "nightly"
 install:
   - python setup.py install
-script: python -m unittest discover -s test
+  - pip install nose
+script: nosetests --logging-level=DEBUG tests
