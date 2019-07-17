@@ -11,6 +11,7 @@ install:
 script: nosetests --logging-level=DEBUG tests
 deploy:
   provider: pypi
+  skip_existing: true
   user: jamie
   password:
     secure: "Ym/8F8pLsO88pQTJ3aNxF7wFyfbDDPHwAiH30aJv0XysH+V3lYL1f11L17yzuBJNWDo8sXBUzdjcLNT3JcVDHiwz1PPa7nliZEyDFz7W5+RkO3byu8Qe27AFsEM2Legzqj4lirRJbQ/GeuhYZUHAGzGUUTtC+bKMum4z/E0hmPNplGrwjtu3V+RXYbbwNJf79ZfSx8mQCWVp+7BmoXaHpk/SKiX6prvVc5z4CDSuyD37Emdt2jYMocEzap5Ip64iMMVIOD45OBJ+5oewywqm4AtznTO3GABLOL1T4w3VyrW2Q3fRNthscyBdpEDjFr4UoF+sNVhF3zqJ9i80elkjBdhtduygRuX9em22I8LsEGvzt5aTg+0XSmZMtz+bgoPbkSZ03oKZfaYPRi8KC4ySE6y+eJQy23eXdPrn/lB4dY6NjN0y6xt6bL8gAIyNnKaO2QfQhzWcswJ3zV/Ot79SuHBvTzZWh9nD7cKB1oHirEG/j7tFm7CTCXAGSAa768LqiSdJCMtwZhqgdyqj6vvRfDlKhUV8b0DcZ71UDRC98CAGa/Pkv73lJL9n6zJCA7FEIn8Z5VuS/6+S1Sb8E2/JFKvIXbWzAEgUdrtu+3pSW3/DFJ+8Zlomvk811/AeUScPjIcXePIL2pfz1bfaa96btKJMUXUouXLa8ha+LOzuHA0="
