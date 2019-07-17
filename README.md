@@ -1,5 +1,7 @@
 # OpenVPN Management Interface Python API
 
+[![Build Status](https://travis-ci.org/Jamie-/openvpn-api.svg?branch=master)](https://travis-ci.org/Jamie-/openvpn-api)
+
 ## Summary
 
 A Python API for interacting with the OpenVPN management interface.
