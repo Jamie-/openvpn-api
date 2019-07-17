@@ -35,7 +35,7 @@ import datetime
 
 class State:
     up_since = None  # Datetime daemon started?
-    state_name = None
+    state_name = None  # See states list above
     desc_string = None
     local_virtual_v4_addr = None
     remote_addr = None
