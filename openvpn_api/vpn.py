@@ -237,3 +237,12 @@ class VPN:
                                bytes_in=match.group('bytesin'),
                                bytes_out=match.group('bytesout'))
         raise ParseError('Did not get expected response from load-stats.')
+
+    def get_status(self):
+        """Get current status from VPN.
+
+        Uses openvpn-status library to parse status output:
+        https://pypi.org/project/openvpn-status/
+        """
+        raw = self.send_command('status')
+        return openvpn_status.parse_status(raw)
