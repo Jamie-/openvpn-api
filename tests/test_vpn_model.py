@@ -108,7 +108,7 @@ END"""
         self.assertIsNone(vpn._state)
         state = vpn.state
         mock.assert_called_once()
-        self.assertEqual(datetime.datetime(2019, 6, 16, 22, 13, 21), state.up_since)
+        self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), state.up_since)
         self.assertEqual('CONNECTED', state.state_name)
         self.assertEqual('SUCCESS', state.desc_string)
         self.assertEqual('10.0.0.1', state.local_virtual_v4_addr)

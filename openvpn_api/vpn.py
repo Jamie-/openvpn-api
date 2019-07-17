@@ -163,7 +163,7 @@ class VPN:
         """
         if self.release is None:
             return None
-        match = re.search('OpenVPN (?P<version>\d+.\d+.\d+)', self.release)
+        match = re.search(r'OpenVPN (?P<version>\d+.\d+.\d+)', self.release)
         if not match:
             raise ParseError('Unable to parse version from release string.')
         return match.group('version')
@@ -230,7 +230,7 @@ class VPN:
         for line in raw.splitlines():
             if not line.startswith('SUCCESS'):
                 continue
-            match = re.search('SUCCESS: nclients=(?P<nclients>\d+),bytesin=(?P<bytesin>\d+),bytesout=(?P<bytesout>\d+)', line)
+            match = re.search(r'SUCCESS: nclients=(?P<nclients>\d+),bytesin=(?P<bytesin>\d+),bytesout=(?P<bytesout>\d+)', line)
             if not match:
                 raise ParseError('Unable to parse stats from load-stats response.')
             return ServerStats(client_count=match.group('nclients'),

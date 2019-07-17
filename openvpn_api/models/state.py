@@ -55,7 +55,7 @@ class State:
                  local_port=None,
                  local_virtual_v6_addr=None):
         if up_since is not None:
-            self.up_since = datetime.datetime.fromtimestamp(int(up_since))
+            self.up_since = datetime.datetime.utcfromtimestamp(int(up_since))
         if state_name is not None:
             self.state_name = state_name
         if desc_string is not None:

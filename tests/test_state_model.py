@@ -17,7 +17,7 @@ class TestState(unittest.TestCase):
             '1194',
             None
         )
-        self.assertEqual(datetime.datetime(2019, 6, 16, 22, 13, 21), s.up_since)
+        self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), s.up_since)
         self.assertEqual('CONNECTED', s.state_name)
         self.assertEqual('SUCCESS', s.desc_string)
         self.assertEqual('10.0.0.1', s.local_virtual_v4_addr)
