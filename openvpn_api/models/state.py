@@ -32,6 +32,8 @@ The output format consists of up to 9 comma-separated parameters:
 
 
 import datetime
+import netaddr
+
 
 class State:
     up_since = None  # Datetime daemon started?
@@ -61,7 +63,7 @@ class State:
         if desc_string is not None:
             self.desc_string = desc_string
         if local_virtual_v4_addr is not None:
-            self.local_virtual_v4_addr = local_virtual_v4_addr
+            self.local_virtual_v4_addr = netaddr.IPAddress(local_virtual_v4_addr)
         if remote_addr is not None:
             self.remote_addr = remote_addr
         if remote_port is not None:

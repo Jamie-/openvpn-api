@@ -1,5 +1,6 @@
 import unittest
 import datetime
+import netaddr
 from unittest.mock import patch, PropertyMock
 from openvpn_api.vpn import VPN, VPNType
 from openvpn_api.util.errors import VPNError, ParseError
@@ -112,7 +113,7 @@ END"""
         self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), state.up_since)
         self.assertEqual('CONNECTED', state.state_name)
         self.assertEqual('SUCCESS', state.desc_string)
-        self.assertEqual('10.0.0.1', state.local_virtual_v4_addr)
+        self.assertEqual(netaddr.IPAddress('10.0.0.1'), state.local_virtual_v4_addr)
         self.assertIsNone(state.remote_addr)
         self.assertIsNone(state.remote_port)
         self.assertEqual('1.2.3.4', state.local_addr)

@@ -151,9 +151,11 @@ The descriptive string - unclear from the OpenVPN documentation quite what this 
 'SUCCESS'
 ```
 
-The daemon's local virtual (VPN internal) address
+The daemon's local virtual (VPN internal) address, returned as a `netaddr.IPAddress` for ease of sorting, it can be easily converted to a string with `str()`
 ```python
 >>> s.local_virtual_v4_addr
+IPAddress('10.0.0.1')
+>>> str(s.local_virtual_v4_addr)
 '10.0.0.1'
 ```
 
