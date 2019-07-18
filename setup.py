@@ -7,9 +7,12 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+with open(os.path.join(here, 'VERSION')) as f:
+    version = f.read().strip()
+
 setup(
     name='openvpn-api',
-    version='0.1.1',
+    version=version,
     description='A Python API for the OpenVPN management interface.',
     long_description=long_description,
     long_description_content_type='text/markdown',
