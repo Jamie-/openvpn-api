@@ -3,6 +3,7 @@ import datetime
 from unittest.mock import patch, PropertyMock
 from openvpn_api.vpn import VPN, VPNType
 from openvpn_api.util.errors import VPNError, ParseError
+import openvpn_status
 
 
 class TestVPNModel(unittest.TestCase):
@@ -159,3 +160,23 @@ END"""
             vpn.get_stats()
         self.assertEqual('Unable to parse stats from load-stats response.', str(ctx.exception))
         mock.assert_called_once()
+
+    @patch('openvpn_api.vpn.VPN.send_command')
+    def test_get_status(self, mock):
+        vpn = VPN(host='localhost', port=1234)
+        mock.return_value = """OpenVPN CLIENT LIST
+Updated,Thu Jul 18 20:47:42 2019
+Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since
+testclient,1.2.3.4:12345,123456789,123456789,Tue Jun 11 21:22:02 2019
+ROUTING TABLE
+Virtual Address,Common Name,Real Address,Last Ref
+10.0.0.2,testclient,1.2.3.4:12345,Wed Jun 12 21:55:04 2019
+GLOBAL STATS
+Max bcast/mcast queue length,2
+END
+"""
+        status = vpn.get_status()
+        mock.assert_called_once()
+        self.assertIsInstance(status, openvpn_status.models.Status)
+        self.assertEqual(len(status.client_list), 1)
+        self.assertEqual(list(status.client_list.keys()), ['1.2.3.4:12345'])
