@@ -5,6 +5,12 @@ class VPNError(Exception):
     pass
 
 
+class ConnectError(VPNError):
+    """Exception raised on connection failure.
+    """
+    pass
+
+
 class ParseError(VPNError):
     """Exception for all management interface parsing errors.
     """

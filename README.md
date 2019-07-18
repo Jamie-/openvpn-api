@@ -48,7 +48,7 @@ print(v.release)
 v.disconnect()
 ```
 If the connection is successful, `v.connect()` will return `True`.
-However, if the connection fails `v.connect()` will return `False` and the failure reason can be found in `v.error`. 
+However, if the connection fails `v.connect()` will raise an `openvpn_api.errors.ConnectError` exception with the reason for the connection failure.
 
 Or use the connection context manager
 ```python

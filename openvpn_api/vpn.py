@@ -4,7 +4,7 @@ import re
 import contextlib
 import openvpn_status
 import openvpn_api.util as util
-from openvpn_api.util.errors import VPNError, ParseError
+from openvpn_api.util.errors import VPNError, ConnectError, ParseError
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
 
@@ -22,7 +22,6 @@ class VPN:
     _mgmt_socket = None  # Management interface UNIX socket
     _type = None  # VPNType object to choose between IP (host:port) and socket
     _socket = None
-    error = None  # Error if thrown when trying to connect to management interface
 
     _release = None  # OpenVPN release string
     _state = None  # State object
@@ -72,9 +71,7 @@ class VPN:
             assert resp.startswith('>INFO'), 'Did not get expected response from interface when opening socket.'
             return True
         except (socket.timeout, socket.error) as e:
-            logger.error(e, exc_info=True)
-            self.error = str(e)
-            return False
+            raise ConnectError(str(e)) from None
 
     def disconnect(self):
         """Disconnect from management interface socket.
