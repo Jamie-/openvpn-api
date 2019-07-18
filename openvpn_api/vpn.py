@@ -24,12 +24,10 @@ class VPN:
     _socket = None
     error = None  # Error if thrown when trying to connect to management interface
 
-    name = None  # VPN name from config
     _release = None  # OpenVPN release string
     _state = None  # State object
     stats = ServerStats()  # Stats object
     sessions = []  # Client sessions
-    allow_disconnect = False  # Allow disconnect via API
 
     def __init__(self,
                  host=None,
@@ -50,12 +48,6 @@ class VPN:
         """Get VPNType object for this VPN.
         """
         return self._type
-
-    @property
-    def anchor(self):
-        """Get VPN name as an HTML anchor compatible string.
-        """
-        return self.name.lower().replace(' ', '_')
 
     @property
     def mgmt_address(self):

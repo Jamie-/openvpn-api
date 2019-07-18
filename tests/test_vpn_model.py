@@ -32,12 +32,16 @@ class TestVPNModel(unittest.TestCase):
         self.assertEqual(vpn.type, VPNType.UNIX_SOCKET)
         self.assertEqual(vpn.mgmt_address, 'file.sock')
 
-    def test_anchor(self):
+    @patch('openvpn_api.vpn.VPN.connect')
+    @patch('openvpn_api.vpn.VPN.disconnect')
+    def test_connection_manager(self, mock_disconnect, mock_connect):
         vpn = VPN(host='localhost', port=1234)
-        vpn.name = 'Test VPN'
-        self.assertEqual(vpn.anchor, 'test_vpn')
-        vpn.name = 'asd_asd'
-        self.assertEqual(vpn.anchor, 'asd_asd')
+        with vpn.connection():
+            mock_connect.assert_called_once()
+            mock_disconnect.assert_not_called()
+            mock_connect.reset_mock()
+        mock_connect.assert_not_called()
+        mock_disconnect.assert_called_once()
 
     @patch('openvpn_api.vpn.VPN.send_command')
     def test__get_version(self, mock_send_command):

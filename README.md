@@ -47,6 +47,8 @@ v.connect()
 print(v.release)
 v.disconnect()
 ```
+If the connection is successful, `v.connect()` will return `True`.
+However, if the connection fails `v.connect()` will return `False` and the failure reason can be found in `v.error`. 
 
 Or use the connection context manager
 ```python
