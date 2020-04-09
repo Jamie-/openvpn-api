@@ -115,7 +115,7 @@ class VPN:
         if cmd.startswith('kill') or cmd.startswith('client-kill'):
             return
         resp = self._socket_recv()
-        if cmd.strip() != 'load-stats':
+        if cmd.strip() not in ('load-stats', 'signal SIGTERM'):
             while not resp.strip().endswith('END'):
                 resp += self._socket_recv()
         logger.debug('Cmd response: %s', resp)
