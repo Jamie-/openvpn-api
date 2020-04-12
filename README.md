@@ -10,9 +10,10 @@ Currently a work in progress so support for client management interfaces and eve
 
 Very useful for extracting metrics and status from OpenVPN server management interfaces.
 
-This project was inspired by the work of Marcus Furlong in creating `openvpn-monitor`.
-It also uses `openvpn-status` by Jiangge Zhang for parsing the output of the `status` command as there's no point reinventing the wheel when an excellent solution already exists.
+This project was inspired by the work of Marcus Furlong in creating [openvpn-monitor](https://github.com/furlongm/openvpn-monitor).
+It also uses [openvpn-status](https://pypi.org/project/openvpn-status/) by Jiangge Zhang for parsing the output of the OpenVPN `status` command as there's no point reinventing the wheel when an excellent solution already exists.
 
+Release notes can be found [here on GitHub](https://github.com/Jamie-/openvpn-api/releases).
 
 ## Requirements
 This project requires Python 3.6 or later.
