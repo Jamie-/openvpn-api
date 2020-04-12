@@ -1,10 +1,25 @@
 import unittest
 import datetime
+import socket
 import netaddr
-from unittest.mock import patch, PropertyMock
-from openvpn_api.vpn import VPN, VPNType
-from openvpn_api.util.errors import VPNError, ParseError
+from unittest.mock import patch, PropertyMock, ANY
 import openvpn_status
+import openvpn_api.util.errors as errors
+from openvpn_api.vpn import VPN, VPNType
+
+
+def gen_mock_values(values):
+    """Generator to return the next value in a list of values on every call.
+
+    >>> vals = gen_mock_values([1, 2, 3])
+    >>> mocked_func.side_effect = lambda: next(vals)
+    >>> mocked_func()
+        1
+    >>> mocked_func()
+        2
+    """
+    for value in values:
+        yield value
 
 
 class TestVPNModel(unittest.TestCase):
@@ -12,7 +27,7 @@ class TestVPNModel(unittest.TestCase):
     """
 
     def test_host_port_socket(self):
-        with self.assertRaises(VPNError) as ctx:
+        with self.assertRaises(errors.VPNError) as ctx:
             VPN(host='localhost', port=1234, socket='file.sock')
         self.assertEqual('Must specify either socket or host and port', str(ctx.exception))
 
@@ -32,6 +47,16 @@ class TestVPNModel(unittest.TestCase):
         self.assertEqual(vpn.type, VPNType.UNIX_SOCKET)
         self.assertEqual(vpn.mgmt_address, 'file.sock')
 
+    @patch('openvpn_api.vpn.socket.create_connection')
+    def test_connect_ip_failure(self, mock_create_connection):
+        vpn = VPN(host='localhost', port=1234)
+        mock_create_connection.side_effect = socket.error()
+        with self.assertRaises(errors.ConnectError):
+            vpn.connect()
+        mock_create_connection.side_effect = socket.timeout()
+        with self.assertRaises(errors.ConnectError):
+            vpn.connect()
+
     @patch('openvpn_api.vpn.VPN.connect')
     @patch('openvpn_api.vpn.VPN.disconnect')
     def test_connection_manager(self, mock_disconnect, mock_connect):
@@ -42,6 +67,58 @@ class TestVPNModel(unittest.TestCase):
             mock_connect.reset_mock()
         mock_connect.assert_not_called()
         mock_disconnect.assert_called_once()
+
+    def test_send_command_disconnected(self):
+        vpn = VPN(host='localhost', port=1234)
+        with self.assertRaises(errors.NotConnectedError):
+            vpn.send_command('asd')
+
+    @patch('openvpn_api.vpn.VPN._socket_recv')
+    @patch('openvpn_api.vpn.VPN._socket_send')
+    @patch('openvpn_api.vpn.socket.create_connection')
+    def test_send_command(self, mock_create_connection, mock_socket_send, mock_socket_recv):
+        vpn = VPN(host='localhost', port=1234)
+        vpn.connect()
+        mock_create_connection.assert_called_once_with(('localhost', 1234), timeout=ANY)
+        mock_socket_recv.assert_called_once()
+        mock_socket_recv.reset_mock()
+        vals = gen_mock_values(['asd\n', 'END\n'])
+        mock_socket_recv.side_effect = lambda: next(vals)
+        a = vpn.send_command('help')
+        mock_socket_send.assert_called_once_with('help\n')
+        self.assertEqual(2, mock_socket_recv.call_count)
+        self.assertEqual(a, 'asd\nEND\n')
+
+    @patch('openvpn_api.vpn.VPN._socket_recv')
+    @patch('openvpn_api.vpn.VPN._socket_send')
+    @patch('openvpn_api.vpn.socket.create_connection')
+    def test_send_command_kill(self, mock_create_connection, mock_socket_send, mock_socket_recv):
+        vpn = VPN(host='localhost', port=1234)
+        vpn.connect()
+        mock_create_connection.assert_called_once_with(('localhost', 1234), timeout=ANY)
+        mock_socket_recv.assert_called_once()
+        mock_socket_recv.reset_mock()
+        self.assertIsNone(vpn.send_command('kill'))
+        mock_socket_send.assert_called_once_with('kill\n')
+        mock_socket_recv.assert_not_called()
+        mock_socket_send.reset_mock()
+        self.assertIsNone(vpn.send_command('client-kill'))
+        mock_socket_send.assert_called_once_with('client-kill\n')
+        mock_socket_recv.assert_not_called()
+
+    @patch('openvpn_api.vpn.VPN._socket_recv')
+    @patch('openvpn_api.vpn.VPN._socket_send')
+    @patch('openvpn_api.vpn.socket.create_connection')
+    def test_send_sigterm(self, mock_create_connection, mock_socket_send, mock_socket_recv):
+        vpn = VPN(host='localhost', port=1234)
+        vpn.connect()
+        mock_create_connection.assert_called_once_with(('localhost', 1234), timeout=ANY)
+        mock_socket_recv.assert_called_once()
+        mock_socket_recv.reset_mock()
+        mock_socket_recv.return_value = 'SUCCESS: signal SIGTERM thrown'
+        vpn.send_sigterm()
+        mock_socket_send.assert_called_once_with('signal SIGTERM\n')
+        mock_socket_recv.assert_called_once()
 
     @patch('openvpn_api.vpn.VPN.send_command')
     def test__get_version(self, mock_send_command):
@@ -56,7 +133,7 @@ END
         mock_send_command.assert_called_once_with('version')
         mock_send_command.reset_mock()
         mock_send_command.return_value = ""
-        with self.assertRaises(ParseError) as ctx:
+        with self.assertRaises(errors.ParseError) as ctx:
             vpn._get_version()
         self.assertEqual('Unable to get OpenVPN version, no matches found in socket response.', str(ctx.exception))
         mock_send_command.assert_called_once_with('version')
@@ -65,7 +142,7 @@ END
 Management Version: 1
 END
         """
-        with self.assertRaises(ParseError) as ctx:
+        with self.assertRaises(errors.ParseError) as ctx:
             vpn._get_version()
         self.assertEqual('Unable to get OpenVPN version, no matches found in socket response.', str(ctx.exception))
         mock_send_command.assert_called_once_with('version')
@@ -101,7 +178,7 @@ END
         mock_get_version.assert_called_once()
         mock_get_version.reset_mock()
         vpn._release = 'asd'
-        with self.assertRaises(ParseError) as ctx:
+        with self.assertRaises(errors.ParseError) as ctx:
             vpn.version()
         self.assertEqual('Unable to parse version from release string.', str(ctx.exception))
         mock_get_version.assert_not_called()
@@ -154,14 +231,14 @@ END"""
         mock.reset_mock()
         # Blank response from send_command
         mock.return_value = ""
-        with self.assertRaises(ParseError) as ctx:
+        with self.assertRaises(errors.ParseError) as ctx:
             vpn.get_stats()
         self.assertEqual('Did not get expected response from load-stats.', str(ctx.exception))
         mock.assert_called_once()
         mock.reset_mock()
         # Bad response from send_command
         mock.return_value = "SUCCESS: nclients=3\n"
-        with self.assertRaises(ParseError) as ctx:
+        with self.assertRaises(errors.ParseError) as ctx:
             vpn.get_stats()
         self.assertEqual('Unable to parse stats from load-stats response.', str(ctx.exception))
         mock.assert_called_once()

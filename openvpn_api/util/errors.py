@@ -5,6 +5,11 @@ class VPNError(Exception):
     pass
 
 
+class NotConnectedError(VPNError):
+    """Exception raised if not connected to the management interface and a command is called."""
+    pass
+
+
 class ConnectError(VPNError):
     """Exception raised on connection failure.
     """

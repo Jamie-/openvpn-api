@@ -4,7 +4,7 @@ import re
 import contextlib
 import openvpn_status
 import openvpn_api.util as util
-from openvpn_api.util.errors import VPNError, ConnectError, ParseError
+import openvpn_api.util.errors as errors
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
 
@@ -33,7 +33,7 @@ class VPN:
                  port=None,
                  socket=None):
         if (socket and host) or (socket and port) or (not socket and not host and not port):
-            raise VPNError('Must specify either socket or host and port')
+            raise errors.VPNError('Must specify either socket or host and port')
         if socket:
             self._mgmt_socket = socket
             self._type = VPNType.UNIX_SOCKET
@@ -71,13 +71,14 @@ class VPN:
             assert resp.startswith('>INFO'), 'Did not get expected response from interface when opening socket.'
             return True
         except (socket.timeout, socket.error) as e:
-            raise ConnectError(str(e)) from None
+            raise errors.ConnectError(str(e)) from None
 
-    def disconnect(self):
+    def disconnect(self, _quit=True):
         """Disconnect from management interface socket.
         """
         if self._socket is not None:
-            self._socket_send('quit\n')
+            if _quit:
+                self._socket_send('quit\n')
             self._socket.close()
             self._socket = None
 
@@ -110,7 +111,9 @@ class VPN:
     def send_command(self, cmd):
         """Send command to management interface and fetch response.
         """
-        logger.debug('Sending cmd: %s', cmd.strip())
+        if not self.is_connected:
+            raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
+        logger.debug('Sending cmd: %r', cmd.strip())
         self._socket_send(cmd + '\n')
         if cmd.startswith('kill') or cmd.startswith('client-kill'):
             return
@@ -118,7 +121,7 @@ class VPN:
         if cmd.strip() not in ('load-stats', 'signal SIGTERM'):
             while not resp.strip().endswith('END'):
                 resp += self._socket_recv()
-        logger.debug('Cmd response: %s', resp)
+        logger.debug('Cmd response: %r', resp)
         return resp
 
     # Interface commands and parsing
@@ -136,7 +139,7 @@ class VPN:
         for line in raw.splitlines():
             if line.startswith('OpenVPN Version'):
                 return line.replace('OpenVPN Version: ', '')
-        raise ParseError('Unable to get OpenVPN version, no matches found in socket response.')
+        raise errors.ParseError('Unable to get OpenVPN version, no matches found in socket response.')
 
     @property
     def release(self):
@@ -154,7 +157,7 @@ class VPN:
             return None
         match = re.search(r'OpenVPN (?P<version>\d+.\d+.\d+)', self.release)
         if not match:
-            raise ParseError('Unable to parse version from release string.')
+            raise errors.ParseError('Unable to parse version from release string.')
         return match.group('version')
 
     def _get_state(self):
@@ -212,6 +215,14 @@ class VPN:
         self._release = None
         self._state = None
 
+    def send_sigterm(self):
+        """Send a SIGTERM to the OpenVPN process.
+        """
+        raw = self.send_command('signal SIGTERM')
+        if raw.strip() != 'SUCCESS: signal SIGTERM thrown':
+            raise errors.ParseError('Did not get expected response after issuing SIGTERM.')
+        self.disconnect(_quit=False)
+
     def get_stats(self):
         """Get latest VPN stats.
         """
@@ -221,11 +232,11 @@ class VPN:
                 continue
             match = re.search(r'SUCCESS: nclients=(?P<nclients>\d+),bytesin=(?P<bytesin>\d+),bytesout=(?P<bytesout>\d+)', line)
             if not match:
-                raise ParseError('Unable to parse stats from load-stats response.')
+                raise errors.ParseError('Unable to parse stats from load-stats response.')
             return ServerStats(client_count=match.group('nclients'),
                                bytes_in=match.group('bytesin'),
                                bytes_out=match.group('bytesout'))
-        raise ParseError('Did not get expected response from load-stats.')
+        raise errors.ParseError('Did not get expected response from load-stats.')
 
     def get_status(self):
         """Get current status from VPN.
