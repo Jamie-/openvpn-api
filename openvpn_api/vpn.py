@@ -244,5 +244,5 @@ class VPN:
         Uses openvpn-status library to parse status output:
         https://pypi.org/project/openvpn-status/
         """
-        raw = self.send_command('status')
+        raw = self.send_command('status 1')
         return openvpn_status.parse_status(raw)
