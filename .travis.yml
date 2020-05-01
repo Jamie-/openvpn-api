@@ -7,8 +7,10 @@ python:
   - "nightly"
 install:
   - python setup.py install
-  - pip install nose
-script: nosetests --logging-level=DEBUG tests
+  - pip install nose black
+script:
+  - black --diff --check .
+  - nosetests --logging-level=DEBUG tests
 deploy:
   provider: pypi
   skip_existing: true

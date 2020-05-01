@@ -46,16 +46,18 @@ class State:
     local_port = None
     local_virtual_v6_addr = None
 
-    def __init__(self,
-                 up_since=None,
-                 state_name=None,
-                 desc_string=None,
-                 local_virtual_v4_addr=None,
-                 remote_addr=None,
-                 remote_port=None,
-                 local_addr=None,
-                 local_port=None,
-                 local_virtual_v6_addr=None):
+    def __init__(
+        self,
+        up_since=None,
+        state_name=None,
+        desc_string=None,
+        local_virtual_v4_addr=None,
+        remote_addr=None,
+        remote_port=None,
+        local_addr=None,
+        local_port=None,
+        local_virtual_v6_addr=None,
+    ):
         if up_since is not None:
             self.up_since = datetime.datetime.utcfromtimestamp(int(up_since))
         if state_name is not None:
@@ -78,7 +80,7 @@ class State:
     @property
     def mode(self):
         if self.remote_addr is None and self.local_addr is None:
-            return 'unknown'
+            return "unknown"
         if self.remote_addr is None:
-            return 'server'
-        return 'client'
+            return "server"
+        return "client"

@@ -12,6 +12,7 @@ def nonify_string(string):
         return None
     return string
 
+
 def nonify_int(string):
     """Return int if string is parsable unless string is empty, then return None."""
     string = nonify_string(string)
