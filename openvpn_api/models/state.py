@@ -38,15 +38,7 @@ import netaddr  # type: ignore
 
 
 class State:
-    up_since = None  # Datetime daemon started?
-    state_name = None  # See states list above
-    desc_string = None
-    local_virtual_v4_addr = None
-    remote_addr = None
-    remote_port = None
-    local_addr = None
-    local_port = None
-    local_virtual_v6_addr = None
+    """OpenVPN daemon state model."""
 
     def __init__(
         self,
@@ -59,25 +51,22 @@ class State:
         local_addr: Optional[str] = None,
         local_port: Optional[int] = None,
         local_virtual_v6_addr: Optional[str] = None,
-    ):
-        if up_since is not None:
-            self.up_since = datetime.datetime.utcfromtimestamp(int(up_since))
-        if state_name is not None:
-            self.state_name = state_name
-        if desc_string is not None:
-            self.desc_string = desc_string
-        if local_virtual_v4_addr is not None:
-            self.local_virtual_v4_addr = netaddr.IPAddress(local_virtual_v4_addr)
-        if remote_addr is not None:
-            self.remote_addr = remote_addr
-        if remote_port is not None:
-            self.remote_port = int(remote_port)
-        if local_addr is not None:
-            self.local_addr = local_addr
-        if local_port is not None:
-            self.local_port = int(local_port)
-        if local_virtual_v6_addr is not None:
-            self.local_virtual_v6_addr = local_virtual_v6_addr
+    ) -> None:
+        # Datetime daemon started?
+        self.up_since = (
+            datetime.datetime.utcfromtimestamp(int(up_since)) if up_since else None
+        )  # type: datetime.datetime
+        # See states list in module docstring
+        self.state_name = state_name  # type: str
+        self.desc_string = desc_string  # type: str
+        self.local_virtual_v4_addr = (
+            netaddr.IPAddress(local_virtual_v4_addr) if local_virtual_v4_addr else None
+        )  # type: netaddr.IPAddress
+        self.remote_addr = remote_addr  # type: str
+        self.remote_port = int(remote_port) if remote_port else None  # type: int
+        self.local_addr = local_addr  # type: str
+        self.local_port = int(local_port) if local_port else None  # type: int
+        self.local_virtual_v6_addr = local_virtual_v6_addr  # type: str
 
     @property
     def mode(self) -> str:
