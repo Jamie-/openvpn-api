@@ -1,7 +1,7 @@
 # OpenVPN Management Interface Python API
 
 [![Build Status](https://travis-ci.org/Jamie-/openvpn-api.svg?branch=master)](https://travis-ci.org/Jamie-/openvpn-api)
-![PyPI](https://img.shields.io/pypi/v/openvpn-api.svg)
+[![PyPI](https://img.shields.io/pypi/v/openvpn-api.svg)](https://pypi.org/project/openvpn-api/)
 
 ## Summary
 
@@ -16,7 +16,11 @@ It also uses [openvpn-status](https://pypi.org/project/openvpn-status/) by Jiang
 Release notes can be found [here on GitHub](https://github.com/Jamie-/openvpn-api/releases).
 
 ## Requirements
-This project requires Python 3.6 or later.
+This project requires Python >= 3.6.
+
+Other packages:
+* [netaddr](https://pypi.org/project/netaddr/)
+* [openvpn-status](https://pypi.org/project/openvpn-status/)
 
 ## Installation
 
