@@ -1,8 +1,10 @@
+from typing import Optional
+
 # Add submodules for easy access
 from . import logging
 
 
-def nonify_string(string):
+def nonify_string(string) -> Optional[str]:
     """Return stripped string unless string is empty string, then return None.
     """
     if string is None:
@@ -13,7 +15,7 @@ def nonify_string(string):
     return string
 
 
-def nonify_int(string):
+def nonify_int(string) -> Optional[int]:
     """Return int if string is parsable unless string is empty, then return None."""
     string = nonify_string(string)
     if string is None:

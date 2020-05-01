@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+import setuptools  # type: ignore
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,7 +10,7 @@ with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
 with open(os.path.join(here, "VERSION")) as f:
     version = f.read().strip()
 
-setup(
+setuptools.setup(
     name="openvpn-api",
     version=version,
     description="A Python API for the OpenVPN management interface.",
@@ -31,7 +31,7 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     keywords="openvpn monitor management",
-    packages=find_packages(exclude=["tests"]),
+    packages=setuptools.find_packages(exclude=["tests"]),
     python_requires=">=3.6",
     install_requires=["netaddr", "openvpn_status",],
     project_urls={

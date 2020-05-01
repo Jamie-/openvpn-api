@@ -32,7 +32,9 @@ The output format consists of up to 9 comma-separated parameters:
 
 
 import datetime
-import netaddr
+from typing import Optional
+
+import netaddr  # type: ignore
 
 
 class State:
@@ -48,15 +50,15 @@ class State:
 
     def __init__(
         self,
-        up_since=None,
-        state_name=None,
-        desc_string=None,
-        local_virtual_v4_addr=None,
-        remote_addr=None,
-        remote_port=None,
-        local_addr=None,
-        local_port=None,
-        local_virtual_v6_addr=None,
+        up_since: Optional[str] = None,
+        state_name: Optional[str] = None,
+        desc_string: Optional[str] = None,
+        local_virtual_v4_addr: Optional[str] = None,
+        remote_addr: Optional[str] = None,
+        remote_port: Optional[int] = None,
+        local_addr: Optional[str] = None,
+        local_port: Optional[int] = None,
+        local_virtual_v6_addr: Optional[str] = None,
     ):
         if up_since is not None:
             self.up_since = datetime.datetime.utcfromtimestamp(int(up_since))
@@ -78,7 +80,7 @@ class State:
             self.local_virtual_v6_addr = local_virtual_v6_addr
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         if self.remote_addr is None and self.local_addr is None:
             return "unknown"
         if self.remote_addr is None:

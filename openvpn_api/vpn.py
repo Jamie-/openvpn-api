@@ -2,7 +2,9 @@ import logging
 import socket
 import re
 import contextlib
-import openvpn_status
+from typing import Optional, Generator
+
+import openvpn_status  # type: ignore
 import openvpn_api.util as util
 import openvpn_api.util.errors as errors
 from openvpn_api.models.state import State
@@ -20,7 +22,7 @@ class VPN:
     _mgmt_host = None  # Management interface host
     _mgmt_port = None  # Management interface port
     _mgmt_socket = None  # Management interface UNIX socket
-    _type = None  # VPNType object to choose between IP (host:port) and socket
+    _type: Optional[str] = None  # VPNType object to choose between IP (host:port) and socket
     _socket = None
 
     _release = None  # OpenVPN release string
@@ -28,7 +30,7 @@ class VPN:
     stats = ServerStats()  # Stats object
     sessions = []  # Client sessions
 
-    def __init__(self, host=None, port=None, socket=None):
+    def __init__(self, host: Optional[str] = None, port: Optional[int] = None, socket: Optional[str] = None):
         if (socket and host) or (socket and port) or (not socket and not host and not port):
             raise errors.VPNError("Must specify either socket or host and port")
         if socket:
@@ -40,13 +42,13 @@ class VPN:
             self._type = VPNType.IP
 
     @property
-    def type(self):
+    def type(self) -> Optional[str]:
         """Get VPNType object for this VPN.
         """
         return self._type
 
     @property
-    def mgmt_address(self):
+    def mgmt_address(self) -> str:
         """Get address of management interface.
         """
         if self.type == VPNType.IP:
@@ -54,7 +56,7 @@ class VPN:
         else:
             return str(self._mgmt_socket)
 
-    def connect(self):
+    def connect(self) -> Optional[bool]:
         """Connect to management interface socket.
         """
         try:
@@ -70,7 +72,7 @@ class VPN:
         except (socket.timeout, socket.error) as e:
             raise errors.ConnectError(str(e)) from None
 
-    def disconnect(self, _quit=True):
+    def disconnect(self, _quit=True) -> None:
         """Disconnect from management interface socket.
         """
         if self._socket is not None:
@@ -80,13 +82,13 @@ class VPN:
             self._socket = None
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Determine if management interface socket is connected or not.
         """
         return self._socket != None
 
     @contextlib.contextmanager
-    def connection(self):
+    def connection(self) -> Generator:
         """Create context where management interface socket is open and close when done.
         """
         self.connect()
@@ -95,17 +97,17 @@ class VPN:
         finally:
             self.disconnect()
 
-    def _socket_send(self, data):
+    def _socket_send(self, data) -> None:
         """Convert data to bytes and send to socket.
         """
         self._socket.send(bytes(data, "utf-8"))
 
-    def _socket_recv(self):
+    def _socket_recv(self) -> str:
         """Receive bytes from socket and convert to string.
         """
         return self._socket.recv(4096).decode("utf-8")
 
-    def send_command(self, cmd):
+    def send_command(self, cmd) -> Optional[str]:
         """Send command to management interface and fetch response.
         """
         if not self.is_connected:
@@ -124,10 +126,10 @@ class VPN:
     # Interface commands and parsing
 
     @staticmethod
-    def has_prefix(line):
+    def has_prefix(line) -> bool:
         return line.startswith(">INFO") or line.startswith(">CLIENT") or line.startswith(">STATE")
 
-    def _get_version(self):
+    def _get_version(self) -> str:
         """Get OpenVPN version from socket.
         """
         raw = self.send_command("version")
@@ -137,7 +139,7 @@ class VPN:
         raise errors.ParseError("Unable to get OpenVPN version, no matches found in socket response.")
 
     @property
-    def release(self):
+    def release(self) -> str:
         """OpenVPN release string.
         """
         if self._release is None:
@@ -145,7 +147,7 @@ class VPN:
         return self._release
 
     @property
-    def version(self):
+    def version(self) -> Optional[str]:
         """OpenVPN version number.
         """
         if self.release is None:
@@ -155,7 +157,7 @@ class VPN:
             raise errors.ParseError("Unable to parse version from release string.")
         return match.group("version")
 
-    def _get_state(self):
+    def _get_state(self) -> State:
         """Get OpenVPN state from socket.
         """
         raw = self.send_command("state")
@@ -193,26 +195,26 @@ class VPN:
             )
 
     @property
-    def state(self):
+    def state(self) -> State:
         """OpenVPN daemon state.
         """
         if self._state is None:
             self._state = self._get_state()
         return self._state
 
-    def cache_data(self):
+    def cache_data(self) -> None:
         """Cached some metadata about the connection.
         """
         _ = self.release
         _ = self.state
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear cached state data about connection.
         """
         self._release = None
         self._state = None
 
-    def send_sigterm(self):
+    def send_sigterm(self) -> None:
         """Send a SIGTERM to the OpenVPN process.
         """
         raw = self.send_command("signal SIGTERM")
@@ -220,7 +222,7 @@ class VPN:
             raise errors.ParseError("Did not get expected response after issuing SIGTERM.")
         self.disconnect(_quit=False)
 
-    def get_stats(self):
+    def get_stats(self) -> ServerStats:
         """Get latest VPN stats.
         """
         raw = self.send_command("load-stats")
