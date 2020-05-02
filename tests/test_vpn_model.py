@@ -35,17 +35,20 @@ class TestVPNModel(unittest.TestCase):
         vpn = VPN(host="localhost", port=1234)
         self.assertEqual(vpn._mgmt_host, "localhost")
         self.assertEqual(vpn._mgmt_port, 1234)
-        self.assertIsNone(vpn._mgmt_socket)
         self.assertEqual(vpn.type, VPNType.IP)
         self.assertEqual(vpn.mgmt_address, "localhost:1234")
 
     def test_socket(self):
         vpn = VPN(socket="file.sock")
         self.assertEqual(vpn._mgmt_socket, "file.sock")
-        self.assertIsNone(vpn._mgmt_host)
-        self.assertIsNone(vpn._mgmt_port)
         self.assertEqual(vpn.type, VPNType.UNIX_SOCKET)
         self.assertEqual(vpn.mgmt_address, "file.sock")
+
+    def test_initialisation(self):
+        vpn = VPN(socket="file.sock")
+        self.assertIsNone(vpn._release)
+        self.assertIsNone(vpn._state)
+        self.assertIsNone(vpn._socket)
 
     @patch("openvpn_api.vpn.socket.create_connection")
     def test_connect_ip_failure(self, mock_create_connection):

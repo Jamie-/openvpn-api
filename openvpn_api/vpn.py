@@ -19,17 +19,6 @@ class VPNType:
 
 
 class VPN:
-    _mgmt_host = None  # Management interface host
-    _mgmt_port = None  # Management interface port
-    _mgmt_socket = None  # Management interface UNIX socket
-    _type: Optional[str] = None  # VPNType object to choose between IP (host:port) and socket
-    _socket = None
-
-    _release = None  # OpenVPN release string
-    _state = None  # State object
-    stats = ServerStats()  # Stats object
-    sessions = []  # Client sessions
-
     def __init__(self, host: Optional[str] = None, port: Optional[int] = None, socket: Optional[str] = None):
         if (socket and host) or (socket and port) or (not socket and not host and not port):
             raise errors.VPNError("Must specify either socket or host and port")
@@ -40,6 +29,8 @@ class VPN:
             self._mgmt_host = host
             self._mgmt_port = port
             self._type = VPNType.IP
+        self._socket = None
+        self.clear_cache()  # Initialise release info and daemon state caches
 
     @property
     def type(self) -> Optional[str]:
@@ -62,7 +53,6 @@ class VPN:
         try:
             if self.type == VPNType.IP:
                 self._socket = socket.create_connection((self._mgmt_host, self._mgmt_port), timeout=3)
-
             else:
                 self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 self._socket.connect(self._mgmt_socket)
