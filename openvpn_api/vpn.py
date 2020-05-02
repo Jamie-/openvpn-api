@@ -216,20 +216,7 @@ class VPN:
         """Get latest VPN stats.
         """
         raw = self.send_command("load-stats")
-        for line in raw.splitlines():
-            if not line.startswith("SUCCESS"):
-                continue
-            match = re.search(
-                r"SUCCESS: nclients=(?P<nclients>\d+),bytesin=(?P<bytesin>\d+),bytesout=(?P<bytesout>\d+)", line
-            )
-            if not match:
-                raise errors.ParseError("Unable to parse stats from load-stats response.")
-            return ServerStats(
-                client_count=match.group("nclients"),
-                bytes_in=match.group("bytesin"),
-                bytes_out=match.group("bytesout"),
-            )
-        raise errors.ParseError("Did not get expected response from load-stats.")
+        return ServerStats.parse(raw)
 
     def get_status(self):
         """Get current status from VPN.
