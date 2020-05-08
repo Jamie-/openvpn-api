@@ -17,7 +17,7 @@ class ServerStats:
         self.bytes_out = bytes_out  # type: int
 
     @classmethod
-    def parse(cls, raw: str) -> 'ServerStats':
+    def parse(cls, raw: str) -> "ServerStats":
         """Parse raw `load-stats` response into an instance."""
         for line in raw.splitlines():
             if not line.startswith("SUCCESS"):
