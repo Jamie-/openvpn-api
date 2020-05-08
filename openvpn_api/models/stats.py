@@ -1,9 +1,11 @@
 import re
 from typing import Optional
-import openvpn_api.util.errors as errors
+
+from openvpn_api.util import errors
+from openvpn_api.models import VPNModel
 
 
-class ServerStats:
+class ServerStats(VPNModel):
     """OpenVPN server stats model."""
 
     def __init__(
@@ -17,7 +19,7 @@ class ServerStats:
         self.bytes_out = bytes_out  # type: int
 
     @classmethod
-    def parse(cls, raw: str) -> "ServerStats":
+    def parse_raw(cls, raw: str) -> "ServerStats":
         """Parse raw `load-stats` response into an instance."""
         for line in raw.splitlines():
             if not line.startswith("SUCCESS"):
@@ -26,13 +28,13 @@ class ServerStats:
                 r"SUCCESS: nclients=(?P<nclients>\d+),bytesin=(?P<bytesin>\d+),bytesout=(?P<bytesout>\d+)", line
             )
             if not match:
-                raise errors.ParseError("Unable to parse stats from load-stats response.")
+                raise errors.ParseError("Unable to parse stats from raw load-stats response.")
             return cls(
                 client_count=int(match.group("nclients")),
                 bytes_in=int(match.group("bytesin")),
                 bytes_out=int(match.group("bytesout")),
             )
-        raise errors.ParseError("Did not get expected response from load-stats.")
+        raise errors.ParseError("Did not get expected data from load-stats.")
 
     def __repr__(self) -> str:
         return f"<ServerStats client_count={self.client_count}, bytes_in={self.bytes_in}, bytes_out={self.bytes_out}>"

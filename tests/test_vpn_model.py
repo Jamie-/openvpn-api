@@ -1,8 +1,6 @@
 import unittest
-import datetime
 import socket
-import netaddr
-from unittest.mock import patch, PropertyMock, ANY
+from unittest.mock import patch, PropertyMock, ANY, MagicMock
 import openvpn_status
 import openvpn_api.util.errors as errors
 from openvpn_api.vpn import VPN, VPNType
@@ -189,24 +187,19 @@ END
         mock_get_version.assert_not_called()
 
     @patch("openvpn_api.vpn.VPN.send_command")
-    def test_server_state(self, mock):
+    @patch("openvpn_api.models.state.State.parse_raw")
+    def test_server_state_caching(self, mock_parse_raw, mock_send_command):
         vpn = VPN(host="localhost", port=1234)
-        mock.return_value = """1560719601,CONNECTED,SUCCESS,10.0.0.1,,,1.2.3.4,1194
-END"""
         self.assertIsNone(vpn._state)
+        fake_state = MagicMock()
+        mock_parse_raw.return_value = fake_state
         state = vpn.state
-        mock.assert_called_once()
-        self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), state.up_since)
-        self.assertEqual("CONNECTED", state.state_name)
-        self.assertEqual("SUCCESS", state.desc_string)
-        self.assertEqual(netaddr.IPAddress("10.0.0.1"), state.local_virtual_v4_addr)
-        self.assertIsNone(state.remote_addr)
-        self.assertIsNone(state.remote_port)
-        self.assertEqual("1.2.3.4", state.local_addr)
-        self.assertEqual(1194, state.local_port)
-        mock.reset_mock()
-        _ = vpn.state
-        mock.assert_not_called()
+        mock_send_command.assert_called_once_with("state")
+        mock_parse_raw.assert_called_once()
+        self.assertEqual(fake_state, state)
+        mock_send_command.reset_mock()
+        self.assertEqual(fake_state, vpn.state)
+        mock_send_command.assert_not_called()
 
     @patch("openvpn_api.vpn.VPN.release", new_callable=PropertyMock)
     @patch("openvpn_api.vpn.VPN.state", new_callable=PropertyMock)
@@ -224,30 +217,13 @@ END"""
         self.assertIsNone(vpn._state)
 
     @patch("openvpn_api.vpn.VPN.send_command")
-    def test_get_stats(self, mock):
-        # Normal response from send_command
+    @patch("openvpn_api.models.stats.ServerStats.parse_raw")
+    def test_get_stats(self, mock_parse_raw, mock_send_command):
         vpn = VPN(host="localhost", port=1234)
-        mock.return_value = "SUCCESS: nclients=3,bytesin=129822996,bytesout=126946564\n"
         stats = vpn.get_stats()
-        mock.assert_called_once()
-        self.assertEqual(3, stats.client_count)
-        self.assertEqual(129822996, stats.bytes_in)
-        self.assertEqual(126946564, stats.bytes_out)
-        self.assertEqual("<ServerStats client_count=3, bytes_in=129822996, bytes_out=126946564>", str(stats))
-        mock.reset_mock()
-        # Blank response from send_command
-        mock.return_value = ""
-        with self.assertRaises(errors.ParseError) as ctx:
-            vpn.get_stats()
-        self.assertEqual("Did not get expected response from load-stats.", str(ctx.exception))
-        mock.assert_called_once()
-        mock.reset_mock()
-        # Bad response from send_command
-        mock.return_value = "SUCCESS: nclients=3\n"
-        with self.assertRaises(errors.ParseError) as ctx:
-            vpn.get_stats()
-        self.assertEqual("Unable to parse stats from load-stats response.", str(ctx.exception))
-        mock.assert_called_once()
+        mock_send_command.assert_called_once_with("load-stats")
+        mock_parse_raw.assert_called_once()
+        self.assertIsNotNone(stats)
 
     @patch("openvpn_api.vpn.VPN.send_command")
     def test_get_status(self, mock):

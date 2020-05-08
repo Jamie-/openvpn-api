@@ -36,8 +36,12 @@ from typing import Optional
 
 import netaddr  # type: ignore
 
+from openvpn_api.models import VPNModel
+from openvpn_api import util
+from openvpn_api.util import errors
 
-class State:
+
+class State(VPNModel):
     """OpenVPN daemon state model."""
 
     def __init__(
@@ -75,3 +79,39 @@ class State:
         if self.remote_addr is None:
             return "server"
         return "client"
+
+    @classmethod
+    def parse_raw(cls, raw: str) -> "State":
+        for line in raw.splitlines():
+            if line.startswith(">INFO") or line.startswith(">CLIENT") or line.startswith(">STATE"):
+                continue
+            if line.strip() == "END":
+                break
+            parts = line.split(",")
+            # 0 - Unix timestamp of server start (UTC?)
+            up_since = parts[0]
+            # 1 - Connection state
+            state_name = util.nonify_string(parts[1])
+            # 2 - Connection state description
+            desc_string = util.nonify_string(parts[2])
+            # 3 - TUN/TAP local v4 address
+            local_virtual_v4_addr = util.nonify_string(parts[3])
+            # 4 - Remote server address (client only)
+            remote_addr = util.nonify_string(parts[4])
+            # 5 - Remote server port (client only)
+            remote_port = util.nonify_int(parts[5])
+            # 6 - Local address
+            local_addr = util.nonify_string(parts[6])
+            # 7 - Local port
+            local_port = util.nonify_int(parts[7])
+            return cls(
+                up_since=up_since,
+                state_name=state_name,
+                desc_string=desc_string,
+                local_virtual_v4_addr=local_virtual_v4_addr,
+                remote_addr=remote_addr,
+                remote_port=remote_port,
+                local_addr=local_addr,
+                local_port=local_port,
+            )
+        raise errors.ParseError("Did not get expected data from state.")
