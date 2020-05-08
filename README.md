@@ -15,6 +15,9 @@ It also uses [openvpn-status](https://pypi.org/project/openvpn-status/) by Jiang
 
 Release notes can be found [here on GitHub](https://github.com/Jamie-/openvpn-api/releases).
 
+:warning: Development work is done in master, if you wish to see the source for a release version, checkout the appropriate `releases/x.x.x` branch.
+The latest release version can be found here: [releases/0.3.x](https://github.com/Jamie-/openvpn-api/tree/releases/0.3.x).
+
 ## Requirements
 This project requires Python >= 3.6.
 
