@@ -115,3 +115,6 @@ class State(VPNModel):
                 local_port=local_port,
             )
         raise errors.ParseError("Did not get expected data from state.")
+
+    def __repr__(self):
+        return f"<State desc='{self.desc_string}', mode='{self.mode}'>"
