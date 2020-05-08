@@ -1,6 +1,6 @@
 import unittest
 import datetime
-import netaddr
+import netaddr  # type: ignore
 import openvpn_api.models.state
 from openvpn_api.util import errors
 

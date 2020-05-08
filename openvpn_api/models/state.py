@@ -36,12 +36,11 @@ from typing import Optional
 
 import netaddr  # type: ignore
 
-from openvpn_api.models import VPNModel
-from openvpn_api import util
+from openvpn_api.models import VPNModelBase
 from openvpn_api.util import errors
 
 
-class State(VPNModel):
+class State(VPNModelBase):
     """OpenVPN daemon state model."""
 
     def __init__(
@@ -87,19 +86,19 @@ class State(VPNModel):
             # 0 - Unix timestamp of server start (UTC?)
             up_since = datetime.datetime.utcfromtimestamp(int(parts[0])) if parts[0] != "" else None
             # 1 - Connection state
-            state_name = util.nonify_string(parts[1])
+            state_name = cls._parse_string(parts[1])
             # 2 - Connection state description
-            desc_string = util.nonify_string(parts[2])
+            desc_string = cls._parse_string(parts[2])
             # 3 - TUN/TAP local v4 address
-            local_virtual_v4_addr = util.nonify_ip(parts[3])
+            local_virtual_v4_addr = cls._parse_ipv4(parts[3])
             # 4 - Remote server address (client only)
-            remote_addr = util.nonify_ip(parts[4])
+            remote_addr = cls._parse_ipv4(parts[4])
             # 5 - Remote server port (client only)
-            remote_port = util.nonify_int(parts[5])
+            remote_port = cls._parse_int(parts[5])
             # 6 - Local address
-            local_addr = util.nonify_ip(parts[6])
+            local_addr = cls._parse_ipv4(parts[6])
             # 7 - Local port
-            local_port = util.nonify_int(parts[7])
+            local_port = cls._parse_int(parts[7])
             return cls(
                 up_since=up_since,
                 state_name=state_name,
@@ -112,5 +111,5 @@ class State(VPNModel):
             )
         raise errors.ParseError("Did not get expected data from state.")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<State desc='{self.desc_string}', mode='{self.mode}'>"

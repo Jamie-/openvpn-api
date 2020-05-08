@@ -2,10 +2,10 @@ import re
 from typing import Optional
 
 from openvpn_api.util import errors
-from openvpn_api.models import VPNModel
+from openvpn_api.models import VPNModelBase
 
 
-class ServerStats(VPNModel):
+class ServerStats(VPNModelBase):
     """OpenVPN server stats model."""
 
     def __init__(
