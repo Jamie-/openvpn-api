@@ -3,12 +3,10 @@ from openvpn_api.models import stats
 from openvpn_api.util import errors
 
 
-class TestState(unittest.TestCase):
-    def test_init(self):
+class TestServerStats(unittest.TestCase):
+    def test_repr(self):
         s = stats.ServerStats(client_count=15, bytes_in=23984723, bytes_out=24532)
-        self.assertEqual(15, s.client_count)
-        self.assertEqual(23984723, s.bytes_in)
-        self.assertEqual(24532, s.bytes_out)
+        self.assertEqual("<ServerStats client_count=15, bytes_in=23984723, bytes_out=24532>", repr(s))
 
     def test_parse_raw(self):
         s = stats.ServerStats.parse_raw("SUCCESS: nclients=3,bytesin=129822996,bytesout=126946564")

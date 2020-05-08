@@ -1,4 +1,5 @@
 from typing import Optional
+import netaddr
 
 # Add submodules for easy access
 from openvpn_api.util import logging
@@ -21,3 +22,11 @@ def nonify_int(string) -> Optional[int]:
     if string is None:
         return string
     return int(string)
+
+
+def nonify_ip(string) -> Optional[netaddr.IPAddress]:
+    """Return netaddr.IPAddress unless string is empty, then return None."""
+    string = nonify_string(string)
+    if string is None:
+        return string
+    return netaddr.IPAddress(string)

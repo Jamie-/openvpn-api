@@ -46,30 +46,26 @@ class State(VPNModel):
 
     def __init__(
         self,
-        up_since: Optional[str] = None,
+        up_since: Optional[datetime.datetime] = None,
         state_name: Optional[str] = None,
         desc_string: Optional[str] = None,
-        local_virtual_v4_addr: Optional[str] = None,
-        remote_addr: Optional[str] = None,
+        local_virtual_v4_addr: Optional[netaddr.IPAddress] = None,
+        remote_addr: Optional[netaddr.IPAddress] = None,
         remote_port: Optional[int] = None,
-        local_addr: Optional[str] = None,
+        local_addr: Optional[netaddr.IPAddress] = None,
         local_port: Optional[int] = None,
         local_virtual_v6_addr: Optional[str] = None,
     ) -> None:
         # Datetime daemon started?
-        self.up_since = (
-            datetime.datetime.utcfromtimestamp(int(up_since)) if up_since else None
-        )  # type: datetime.datetime
+        self.up_since = up_since  # type: datetime.datetime
         # See states list in module docstring
         self.state_name = state_name  # type: str
         self.desc_string = desc_string  # type: str
-        self.local_virtual_v4_addr = (
-            netaddr.IPAddress(local_virtual_v4_addr) if local_virtual_v4_addr else None
-        )  # type: netaddr.IPAddress
-        self.remote_addr = remote_addr  # type: str
-        self.remote_port = int(remote_port) if remote_port else None  # type: int
-        self.local_addr = local_addr  # type: str
-        self.local_port = int(local_port) if local_port else None  # type: int
+        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: netaddr.IPAddress
+        self.remote_addr = remote_addr  # type: netaddr.IPAddress
+        self.remote_port = remote_port  # type: int
+        self.local_addr = local_addr  # type: netaddr.IPAddress
+        self.local_port = local_port  # type: int
         self.local_virtual_v6_addr = local_virtual_v6_addr  # type: str
 
     @property
@@ -89,19 +85,19 @@ class State(VPNModel):
                 break
             parts = line.split(",")
             # 0 - Unix timestamp of server start (UTC?)
-            up_since = parts[0]
+            up_since = datetime.datetime.utcfromtimestamp(int(parts[0])) if parts[0] != "" else None
             # 1 - Connection state
             state_name = util.nonify_string(parts[1])
             # 2 - Connection state description
             desc_string = util.nonify_string(parts[2])
             # 3 - TUN/TAP local v4 address
-            local_virtual_v4_addr = util.nonify_string(parts[3])
+            local_virtual_v4_addr = util.nonify_ip(parts[3])
             # 4 - Remote server address (client only)
-            remote_addr = util.nonify_string(parts[4])
+            remote_addr = util.nonify_ip(parts[4])
             # 5 - Remote server port (client only)
             remote_port = util.nonify_int(parts[5])
             # 6 - Local address
-            local_addr = util.nonify_string(parts[6])
+            local_addr = util.nonify_ip(parts[6])
             # 7 - Local port
             local_port = util.nonify_int(parts[7])
             return cls(

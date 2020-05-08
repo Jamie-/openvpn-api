@@ -6,41 +6,16 @@ from openvpn_api.util import errors
 
 
 class TestState(unittest.TestCase):
-    def test_init(self):
-        s = openvpn_api.models.state.State(
-            "1560719601",
-            "CONNECTED",
-            "SUCCESS",
-            "10.0.0.1",
-            None,  # Should be None for server state
-            None,  # Should be None for server state
-            "1.2.3.4",
-            "1194",
-            None,
-        )
-        self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), s.up_since)
-        self.assertEqual("CONNECTED", s.state_name)
-        self.assertEqual("SUCCESS", s.desc_string)
-        self.assertEqual(netaddr.IPAddress("10.0.0.1"), s.local_virtual_v4_addr)
-        self.assertEqual("10.0.0.1", str(s.local_virtual_v4_addr))
-        self.assertIsNone(s.remote_addr)
-        self.assertIsNone(s.remote_port)
-        self.assertEqual("1.2.3.4", s.local_addr)
-        self.assertEqual(1194, s.local_port)
-        self.assertIsNone(s.local_virtual_v6_addr)
-        # Props
-        self.assertEqual("server", s.mode)
-
     def test_repr(self):
         s = openvpn_api.models.state.State(
-            "1560719601",
+            datetime.datetime(2019, 6, 16, 21, 13, 21),
             "CONNECTED",
             "SUCCESS",
-            "10.0.0.1",
+            netaddr.IPAddress("10.0.0.1"),
             None,  # Should be None for server state
             None,  # Should be None for server state
-            "1.2.3.4",
-            "1194",
+            netaddr.IPAddress("1.2.3.4"),
+            1194,
             None,
         )
         self.assertEqual("<State desc='SUCCESS', mode='server'>", repr(s))
@@ -68,7 +43,8 @@ class TestState(unittest.TestCase):
         self.assertEqual("10.0.0.1", str(s.local_virtual_v4_addr))
         self.assertIsNone(s.remote_addr)
         self.assertIsNone(s.remote_port)
-        self.assertEqual("1.2.3.4", s.local_addr)
+        self.assertEqual(netaddr.IPAddress("1.2.3.4"), s.local_addr)
+        self.assertEqual("1.2.3.4", str(s.local_addr))
         self.assertEqual(1194, s.local_port)
         self.assertIsNone(s.local_virtual_v6_addr)
         # Props
