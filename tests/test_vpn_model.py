@@ -2,7 +2,7 @@ import unittest
 import socket
 from unittest.mock import patch, PropertyMock, ANY, MagicMock
 import openvpn_status
-import openvpn_api.util.errors as errors
+from openvpn_api.util import errors
 from openvpn_api.vpn import VPN, VPNType
 
 

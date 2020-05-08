@@ -5,8 +5,7 @@ import contextlib
 from typing import Optional, Generator
 
 import openvpn_status  # type: ignore
-import openvpn_api.util as util
-import openvpn_api.util.errors as errors
+from openvpn_api.util import errors
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
 

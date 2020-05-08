@@ -1,7 +1,7 @@
 from typing import Optional
 
 # Add submodules for easy access
-from . import logging
+from openvpn_api.util import logging
 
 
 def nonify_string(string) -> Optional[str]:
