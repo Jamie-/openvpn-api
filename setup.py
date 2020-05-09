@@ -34,6 +34,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["tests"]),
     python_requires=">=3.6",
     install_requires=["netaddr", "openvpn_status",],
+    extras_require={"dev": ["nose", "black",],},
     project_urls={
         "Source": "https://github.com/Jamie-/openvpn-api",
         "Bug Reports": "https://github.com/Jamie-/openvpn-api/issues",
