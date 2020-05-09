@@ -45,7 +45,6 @@ class TestVPNModel(unittest.TestCase):
     def test_initialisation(self):
         vpn = VPN(socket="file.sock")
         self.assertIsNone(vpn._release)
-        self.assertIsNone(vpn._state)
         self.assertIsNone(vpn._socket)
 
     @patch("openvpn_api.vpn.socket.create_connection")
@@ -188,33 +187,23 @@ END
 
     @patch("openvpn_api.vpn.VPN.send_command")
     @patch("openvpn_api.models.state.State.parse_raw")
-    def test_server_state_caching(self, mock_parse_raw, mock_send_command):
+    def test_get_state(self, mock_parse_raw, mock_send_command):
         vpn = VPN(host="localhost", port=1234)
-        self.assertIsNone(vpn._state)
-        fake_state = MagicMock()
-        mock_parse_raw.return_value = fake_state
-        state = vpn.state
+        state = vpn.get_state()
         mock_send_command.assert_called_once_with("state")
         mock_parse_raw.assert_called_once()
-        self.assertEqual(fake_state, state)
-        mock_send_command.reset_mock()
-        self.assertEqual(fake_state, vpn.state)
-        mock_send_command.assert_not_called()
+        self.assertIsNotNone(state)
 
     @patch("openvpn_api.vpn.VPN.release", new_callable=PropertyMock)
-    @patch("openvpn_api.vpn.VPN.state", new_callable=PropertyMock)
-    def test_cache(self, release_mock, state_mock):
+    def test_cache(self, release_mock):
         """Test caching VPN metadata works and clears correctly.
         """
         vpn = VPN(host="localhost", port=1234)
         vpn.cache_data()
         release_mock.assert_called_once()
-        state_mock.assert_called_once()
         vpn._release = "asd"
-        vpn._state = "qwe"
         vpn.clear_cache()
         self.assertIsNone(vpn._release)
-        self.assertIsNone(vpn._state)
 
     @patch("openvpn_api.vpn.VPN.send_command")
     @patch("openvpn_api.models.stats.ServerStats.parse_raw")

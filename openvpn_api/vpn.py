@@ -31,7 +31,6 @@ class VPN:
         self._socket = None
         # Initialise release info and daemon state caches
         self._release = None  # type: Optional[str]
-        self._state = None  # type: Optional["State"]
 
     @property
     def type(self) -> Optional[str]:
@@ -148,31 +147,21 @@ class VPN:
             raise errors.ParseError("Unable to parse version from release string.")
         return match.group("version")
 
-    def _get_state(self) -> State:
-        """Get OpenVPN state from socket.
+    def get_state(self) -> State:
+        """Get OpenVPN daemon state from socket.
         """
         raw = self.send_command("state")
         return State.parse_raw(raw)
-
-    @property
-    def state(self) -> State:
-        """OpenVPN daemon state.
-        """
-        if self._state is None:
-            self._state = self._get_state()
-        return self._state
 
     def cache_data(self) -> None:
         """Cached some metadata about the connection.
         """
         _ = self.release
-        _ = self.state
 
     def clear_cache(self) -> None:
         """Clear cached state data about connection.
         """
         self._release = None
-        self._state = None
 
     def send_sigterm(self) -> None:
         """Send a SIGTERM to the OpenVPN process.
