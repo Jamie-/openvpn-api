@@ -2,12 +2,15 @@ import contextlib
 import logging
 import re
 import socket
+import queue
+import threading
 from enum import Enum
 from typing import Optional, Generator
 
 import openvpn_status
 from openvpn_status.models import Status
 
+from openvpn_api import events
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
 from openvpn_api.util import errors
@@ -32,6 +35,17 @@ class VPN:
 
         # Release info cache
         self._release: Optional[str] = None
+
+        self._socket_file = None
+        self._socket_io_lock = threading.Lock()
+
+        self._listener_thread = None
+        self._writer_thread = None
+
+        self._recv_queue = queue.Queue()
+        self._send_queue = queue.Queue()
+
+        self._active_event = None
 
     @property
     def type(self) -> VPNType:
@@ -58,13 +72,23 @@ class VPN:
         try:
             if self.type == VPNType.IP:
                 assert self._mgmt_host is not None and self._mgmt_port is not None
-                self._socket = socket.create_connection((self._mgmt_host, self._mgmt_port), timeout=3)
+                self._socket = socket.create_connection((self._mgmt_host, self._mgmt_port), timeout=None)
             elif self.type == VPNType.UNIX_SOCKET:
                 assert self._mgmt_socket is not None
                 self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 self._socket.connect(self._mgmt_socket)
             else:
                 raise ValueError("Invalid connection type")
+
+            self._socket_file = self._socket.makefile("r")
+
+            self._listener_thread = threading.Thread(
+                target=self._socket_listener_thread, daemon=True, name="mgmt-listener"
+            )
+            self._writer_thread = threading.Thread(target=self._socket_writer_thread, daemon=True, name="mgmt-writer")
+
+            self._listener_thread.start()
+            self._writer_thread.start()
 
             resp = self._socket_recv()
             assert resp.startswith(">INFO"), "Did not get expected response from interface when opening socket."
@@ -79,6 +103,8 @@ class VPN:
         if self._socket is not None:
             if _quit:
                 self._socket_send("quit\n")
+
+            self._socket_file.close()
             self._socket.close()
             self._socket = None
 
@@ -98,19 +124,62 @@ class VPN:
         finally:
             self.disconnect()
 
+    def _socket_listener_thread(self):
+        """This thread handles the socket's output and handles any events before adding the output to the receive queue.
+        """
+        active_event_lines = []
+        while True:
+            if not self.is_connected:
+                break
+
+            line = self._socket_file.readline().strip()
+
+            if self._active_event is None:
+                for event in events.event_types:
+                    if event.is_input_began(line):
+                        active_event_lines = []
+                        if event.is_input_ended(line):
+                            events.raise_event(event.parse_raw([line]))
+                        else:
+                            self._socket_io_lock.acquire()
+                            self._active_event = event
+                            active_event_lines.append(line)
+                        break
+                else:
+                    self._recv_queue.put(line)
+            else:
+                active_event_lines.append(line)
+                if self._active_event.is_input_ended(line):
+                    events.raise_event(self._active_event.parse_raw(active_event_lines))
+                    active_event_lines = []
+                    self._active_event = None
+                    self._socket_io_lock.release()
+
+    def _socket_writer_thread(self):
+        while True:
+            if not self.is_connected:
+                break
+
+            try:
+                data = self._send_queue.get()
+                self._socket_io_lock.acquire()
+                self._socket.send(bytes(data, "utf-8"))
+            finally:
+                self._socket_io_lock.release()
+
     def _socket_send(self, data) -> None:
         """Convert data to bytes and send to socket.
         """
         if self._socket is None:
             raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
-        self._socket.send(bytes(data, "utf-8"))
+        self._send_queue.put(data)
 
     def _socket_recv(self) -> str:
         """Receive bytes from socket and convert to string.
         """
         if self._socket is None:
             raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
-        return self._socket.recv(4096).decode("utf-8")
+        return self._recv_queue.get()
 
     def send_command(self, cmd) -> str:
         """Send command to management interface and fetch response.
