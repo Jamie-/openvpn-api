@@ -1,7 +1,9 @@
 import importlib
 import typing
 
-event_types = []
+from openvpn_api.events import client
+
+event_types = [importlib.import_module(".client", __name__)]
 
 
 def raise_event(event: typing.Type) -> None:
