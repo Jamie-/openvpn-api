@@ -113,23 +113,24 @@ Or just the version number
 '2.4.4'
 ```
 
-We can get more information about the service by looking at it's state which is returned as a State object
-```python
->>> s = v.state
->>> s
-<models.state.State object at 0x7f5eb549a630>
-```
-
-The state cached by all 3 of these properties can be also be cleared and will be repopulated on the next call
+The information cached by these 2 properties can be cleared and will be repopulated on the next call
 ```python
 v.clear_cache()
 ```
 
 #### Daemon State
+
+We can get more information about the service by looking at it's state which is returned as a State object
+```python
+>>> v.get_state()
+<State desc='SUCCESS', mode='server'>
+```
+
 The State object contains the following things:
 
 The daemon's current mode, `client` or `server`
 ```python
+>>> s = v.get_state()
 >>> s.mode
 'server'
 ```
@@ -175,7 +176,7 @@ IPAddress('10.0.0.1')
 If the daemon is in client mode, then `remote_addr` and `remote_port` will be populated with the address and port of the remote server
 ```python
 >>> s.remote_addr
-'1.2.3.4'
+IPAddress('1.2.3.4')
 >>> s.remote_port
 1194
 ```
@@ -183,7 +184,7 @@ If the daemon is in client mode, then `remote_addr` and `remote_port` will be po
 If the daemon is in server mode, then `local_addr` and `local_port` will be populated with the address and port of the exposed server
 ```python
 >>> s.local_addr
-'5.6.7.8'
+IPAddress('5.6.7.8')
 >>> s.local_port
 1194
 ```
