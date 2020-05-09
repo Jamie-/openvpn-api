@@ -18,6 +18,9 @@ Release notes can be found [here on GitHub](https://github.com/Jamie-/openvpn-ap
 :warning: Development work is done in master, if you wish to see the source for a release version, checkout the appropriate `releases/x.x.x` branch.
 The latest release version can be found here: [releases/0.3.x](https://github.com/Jamie-/openvpn-api/tree/releases/0.3.x).
 
+When using and developing this library, you may find the manual for the OpenVPN [management interface](https://openvpn.net/community-resources/controlling-a-running-openvpn-process/#using-the-management-interface) useful: https://openvpn.net/community-resources/management-interface/
+
+
 ## Requirements
 This project requires Python >= 3.6.
 
