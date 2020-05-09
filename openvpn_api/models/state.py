@@ -56,16 +56,16 @@ class State(VPNModelBase):
         local_virtual_v6_addr: Optional[str] = None,
     ) -> None:
         # Datetime daemon started?
-        self.up_since = up_since  # type: datetime.datetime
+        self.up_since = up_since  # type: Optional[datetime.datetime]
         # See states list in module docstring
-        self.state_name = state_name  # type: str
-        self.desc_string = desc_string  # type: str
-        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: netaddr.IPAddress
-        self.remote_addr = remote_addr  # type: netaddr.IPAddress
-        self.remote_port = remote_port  # type: int
-        self.local_addr = local_addr  # type: netaddr.IPAddress
-        self.local_port = local_port  # type: int
-        self.local_virtual_v6_addr = local_virtual_v6_addr  # type: str
+        self.state_name = state_name  # type: Optional[str]
+        self.desc_string = desc_string  # type: Optional[str]
+        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: Optional[netaddr.IPAddress]
+        self.remote_addr = remote_addr  # type: Optional[netaddr.IPAddress]
+        self.remote_port = remote_port  # type: Optional[int]
+        self.local_addr = local_addr  # type: Optional[netaddr.IPAddress]
+        self.local_port = local_port  # type: Optional[int]
+        self.local_virtual_v6_addr = local_virtual_v6_addr  # type: Optional[str]
 
     @property
     def mode(self) -> str:

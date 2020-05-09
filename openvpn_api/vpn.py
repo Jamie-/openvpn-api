@@ -29,7 +29,9 @@ class VPN:
             self._mgmt_port = port
             self._type = VPNType.IP
         self._socket = None
-        self.clear_cache()  # Initialise release info and daemon state caches
+        # Initialise release info and daemon state caches
+        self._release = None  # type: Optional[str]
+        self._state = None  # type: Optional["State"]
 
     @property
     def type(self) -> Optional[str]:

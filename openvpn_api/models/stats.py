@@ -12,11 +12,11 @@ class ServerStats(VPNModelBase):
         self, client_count: Optional[int] = None, bytes_in: Optional[int] = None, bytes_out: Optional[int] = None,
     ) -> None:
         # Number of connected clients
-        self.client_count = client_count  # type: int
+        self.client_count = client_count  # type: Optional[int]
         # Server bytes in
-        self.bytes_in = bytes_in  # type: int
+        self.bytes_in = bytes_in  # type: Optional[int]
         # Server bytes out
-        self.bytes_out = bytes_out  # type: int
+        self.bytes_out = bytes_out  # type: Optional[int]
 
     @classmethod
     def parse_raw(cls, raw: str) -> "ServerStats":
