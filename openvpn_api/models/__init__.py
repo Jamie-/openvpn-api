@@ -1,8 +1,8 @@
 import abc
-from typing import Optional
+from typing import Optional, Tuple
 
 import netaddr  # type: ignore
-from openvpn_api import _constants
+from openvpn_api import constants
 
 
 class VPNModelBase(abc.ABC):
@@ -44,12 +44,12 @@ class VPNModelBase(abc.ABC):
         return netaddr.IPAddress(raw)
 
     @staticmethod
-    def _parse_notification(line: str) -> (Optional[str], Optional[str]):
+    def _parse_notification(line: str) -> Tuple[Optional[str], Optional[str]]:
         """Parse an OpenVPN real-time notification message into type and message."""
         if line.startswith(">"):
             message = line[1:].split(":", 1)
             assert len(message) == 2, "Malformed notification"
-            if message[0] in _constants.NOTIFICATION_PREFIXES:
+            if message[0] in constants._NOTIFICATION_PREFIXES:
                 return (message[0], message[1])
         return (None, None)
 
