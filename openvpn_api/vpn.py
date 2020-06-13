@@ -91,18 +91,20 @@ class VPN:
     def _socket_send(self, data) -> None:
         """Convert data to bytes and send to socket.
         """
+        if self._socket is None:
+            raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         self._socket.send(bytes(data, "utf-8"))
 
     def _socket_recv(self) -> str:
         """Receive bytes from socket and convert to string.
         """
+        if self._socket is None:
+            raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         return self._socket.recv(4096).decode("utf-8")
 
     def send_command(self, cmd) -> str:
         """Send command to management interface and fetch response.
         """
-        if not self.is_connected:
-            raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         logger.debug("Sending cmd: %r", cmd.strip())
         self._socket_send(cmd + "\n")
         resp = self._socket_recv()
