@@ -2,6 +2,7 @@ import abc
 from typing import Optional
 
 import netaddr  # type: ignore
+from openvpn_api import _constants
 
 
 class VPNModelBase(abc.ABC):
@@ -41,3 +42,19 @@ class VPNModelBase(abc.ABC):
         if raw is None:
             return raw
         return netaddr.IPAddress(raw)
+
+    @staticmethod
+    def _parse_notification(line: str) -> (Optional[str], Optional[str]):
+        """Parse an OpenVPN real-time notification message into type and message."""
+        if line.startswith(">"):
+            message = line[1:].split(":", 1)
+            assert len(message) == 2, "Malformed notification"
+            if message[0] in _constants.NOTIFICATION_PREFIXES:
+                return (message[0], message[1])
+        return (None, None)
+
+    @classmethod
+    def _is_notification(cls, line: str) -> bool:
+        """Test if `line` is an OpenVPN notification message."""
+        notification, message = cls._parse_notification(line)
+        return notification is not None and message is not None

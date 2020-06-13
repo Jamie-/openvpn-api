@@ -115,10 +115,6 @@ class VPN:
 
     # Interface commands and parsing
 
-    @staticmethod
-    def has_prefix(line) -> bool:
-        return line.startswith(">INFO") or line.startswith(">CLIENT") or line.startswith(">STATE")
-
     def _get_version(self) -> str:
         """Get OpenVPN version from socket.
         """

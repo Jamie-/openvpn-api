@@ -78,7 +78,7 @@ class State(VPNModelBase):
     @classmethod
     def parse_raw(cls, raw: str) -> "State":
         for line in raw.splitlines():
-            if line.startswith(">INFO") or line.startswith(">CLIENT") or line.startswith(">STATE"):
+            if cls._is_notification(line):
                 continue
             if line.strip() == "END":
                 break
