@@ -64,6 +64,7 @@ class VPN:
 
     def disconnect(self, _quit=True) -> None:
         """Disconnect from management interface socket.
+        By default will issue the `quit` command to inform the management interface we are closing the connection
         """
         if self._socket is not None:
             if _quit:
@@ -97,18 +98,16 @@ class VPN:
         """
         return self._socket.recv(4096).decode("utf-8")
 
-    def send_command(self, cmd) -> Optional[str]:
+    def send_command(self, cmd) -> str:
         """Send command to management interface and fetch response.
         """
         if not self.is_connected:
             raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         logger.debug("Sending cmd: %r", cmd.strip())
         self._socket_send(cmd + "\n")
-        if cmd.startswith("kill") or cmd.startswith("client-kill"):
-            return None
         resp = self._socket_recv()
         if cmd.strip() not in ("load-stats", "signal SIGTERM"):
-            while not resp.strip().endswith("END"):
+            while not (resp.strip().endswith("END") or resp.strip().startswith("SUCCESS:")):
                 resp += self._socket_recv()
         logger.debug("Cmd response: %r", resp)
         return resp

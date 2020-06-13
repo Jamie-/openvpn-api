@@ -93,18 +93,28 @@ class TestVPNModel(unittest.TestCase):
     @patch("openvpn_api.vpn.VPN._socket_send")
     @patch("openvpn_api.vpn.socket.create_connection")
     def test_send_command_kill(self, mock_create_connection, mock_socket_send, mock_socket_recv):
+        # This test just makes sure we don't infinitely loop reading from socket waiting for END
+        # Needs rewriting once we add methods for killing clients.
+        # Example output from management interface:
+        #   client-kill 1
+        #   SUCCESS: client-kill command succeeded
+        #   kill 1.2.3.4:12345
+        #   SUCCESS: 1 client(s) at address 1.2.3.4:12345 killed
         vpn = VPN(host="localhost", port=1234)
         vpn.connect()
         mock_create_connection.assert_called_once_with(("localhost", 1234), timeout=ANY)
         mock_socket_recv.assert_called_once()
         mock_socket_recv.reset_mock()
-        self.assertIsNone(vpn.send_command("kill"))
-        mock_socket_send.assert_called_once_with("kill\n")
-        mock_socket_recv.assert_not_called()
+        mock_socket_recv.return_value = "SUCCESS: 1 client(s) at address 1.2.3.4:12345 killed"
+        vpn.send_command("kill 1.2.3.4:12345")
+        mock_socket_send.assert_called_once_with("kill 1.2.3.4:12345\n")
+        mock_socket_recv.assert_called_once()
         mock_socket_send.reset_mock()
-        self.assertIsNone(vpn.send_command("client-kill"))
-        mock_socket_send.assert_called_once_with("client-kill\n")
-        mock_socket_recv.assert_not_called()
+        mock_socket_recv.reset_mock()
+        mock_socket_recv.return_value = "SUCCESS: client-kill command succeeded"
+        vpn.send_command("client-kill 1")
+        mock_socket_send.assert_called_once_with("client-kill 1\n")
+        mock_socket_recv.assert_called_once()
 
     @patch("openvpn_api.vpn.VPN._socket_recv")
     @patch("openvpn_api.vpn.VPN._socket_send")
