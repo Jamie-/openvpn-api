@@ -18,17 +18,17 @@ class VPNType:
 
 
 class VPN:
-    def __init__(self, host: Optional[str] = None, port: Optional[int] = None, socket: Optional[str] = None):
-        if (socket and host) or (socket and port) or (not socket and not host and not port):
+    def __init__(self, host: Optional[str] = None, port: Optional[int] = None, unix_socket: Optional[str] = None):
+        if (unix_socket and host) or (unix_socket and port) or (not unix_socket and not host and not port):
             raise errors.VPNError("Must specify either socket or host and port")
-        if socket:
-            self._mgmt_socket = socket
+        if unix_socket:
+            self._mgmt_socket = unix_socket
             self._type = VPNType.UNIX_SOCKET
         else:
             self._mgmt_host = host
             self._mgmt_port = port
             self._type = VPNType.IP
-        self._socket = None
+        self._socket = None  # type: Optional[socket.socket]
         # Initialise release info and daemon state caches
         self._release = None  # type: Optional[str]
 
@@ -105,7 +105,7 @@ class VPN:
         logger.debug("Sending cmd: %r", cmd.strip())
         self._socket_send(cmd + "\n")
         if cmd.startswith("kill") or cmd.startswith("client-kill"):
-            return
+            return None
         resp = self._socket_recv()
         if cmd.strip() not in ("load-stats", "signal SIGTERM"):
             while not resp.strip().endswith("END"):
