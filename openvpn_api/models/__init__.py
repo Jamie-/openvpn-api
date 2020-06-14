@@ -1,8 +1,10 @@
 import abc
-from typing import Optional, Tuple
+from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Optional, Tuple, Union
 
-import netaddr  # type: ignore
 from openvpn_api import constants
+
+IPAddress = Union[IPv4Address, IPv6Address]
 
 
 class VPNModelBase(abc.ABC):
@@ -36,12 +38,12 @@ class VPNModelBase(abc.ABC):
         return int(raw)
 
     @classmethod
-    def _parse_ipv4(cls, raw: Optional[str]) -> Optional[netaddr.IPAddress]:
+    def _parse_ipaddress(cls, raw: Optional[str]) -> Optional[IPAddress]:
         """Return netaddr.IPAddress unless raw is empty, then return None."""
         raw = cls._parse_string(raw)
         if raw is None:
             return raw
-        return netaddr.IPAddress(raw)
+        return ip_address(raw)
 
     @staticmethod
     def _parse_notification(line: str) -> Tuple[Optional[str], Optional[str]]:

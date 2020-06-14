@@ -1,6 +1,7 @@
 import unittest
 import datetime
-import netaddr  # type: ignore
+from ipaddress import IPv4Address
+
 import openvpn_api.models.state
 from openvpn_api.util import errors
 
@@ -11,10 +12,10 @@ class TestState(unittest.TestCase):
             datetime.datetime(2019, 6, 16, 21, 13, 21),
             "CONNECTED",
             "SUCCESS",
-            netaddr.IPAddress("10.0.0.1"),
+            IPv4Address("10.0.0.1"),
             None,  # Should be None for server state
             None,  # Should be None for server state
-            netaddr.IPAddress("1.2.3.4"),
+            IPv4Address("1.2.3.4"),
             1194,
             None,
         )
@@ -39,11 +40,11 @@ class TestState(unittest.TestCase):
         self.assertEqual(datetime.datetime(2019, 6, 16, 21, 13, 21), s.up_since)
         self.assertEqual("CONNECTED", s.state_name)
         self.assertEqual("SUCCESS", s.desc_string)
-        self.assertEqual(netaddr.IPAddress("10.0.0.1"), s.local_virtual_v4_addr)
+        self.assertEqual(IPv4Address("10.0.0.1"), s.local_virtual_v4_addr)
         self.assertEqual("10.0.0.1", str(s.local_virtual_v4_addr))
         self.assertIsNone(s.remote_addr)
         self.assertIsNone(s.remote_port)
-        self.assertEqual(netaddr.IPAddress("1.2.3.4"), s.local_addr)
+        self.assertEqual(IPv4Address("1.2.3.4"), s.local_addr)
         self.assertEqual("1.2.3.4", str(s.local_addr))
         self.assertEqual(1194, s.local_port)
         self.assertIsNone(s.local_virtual_v6_addr)

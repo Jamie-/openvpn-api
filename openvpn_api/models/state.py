@@ -34,9 +34,7 @@ The output format consists of up to 9 comma-separated parameters:
 import datetime
 from typing import Optional
 
-import netaddr  # type: ignore
-
-from openvpn_api.models import VPNModelBase
+from openvpn_api.models import VPNModelBase, IPAddress
 from openvpn_api.util import errors
 
 
@@ -48,10 +46,10 @@ class State(VPNModelBase):
         up_since: Optional[datetime.datetime] = None,
         state_name: Optional[str] = None,
         desc_string: Optional[str] = None,
-        local_virtual_v4_addr: Optional[netaddr.IPAddress] = None,
-        remote_addr: Optional[netaddr.IPAddress] = None,
+        local_virtual_v4_addr: Optional[IPAddress] = None,
+        remote_addr: Optional[IPAddress] = None,
         remote_port: Optional[int] = None,
-        local_addr: Optional[netaddr.IPAddress] = None,
+        local_addr: Optional[IPAddress] = None,
         local_port: Optional[int] = None,
         local_virtual_v6_addr: Optional[str] = None,
     ) -> None:
@@ -60,10 +58,10 @@ class State(VPNModelBase):
         # See states list in module docstring
         self.state_name = state_name  # type: Optional[str]
         self.desc_string = desc_string  # type: Optional[str]
-        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: Optional[netaddr.IPAddress]
-        self.remote_addr = remote_addr  # type: Optional[netaddr.IPAddress]
+        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: Optional[IPAddress]
+        self.remote_addr = remote_addr  # type: Optional[IPAddress]
         self.remote_port = remote_port  # type: Optional[int]
-        self.local_addr = local_addr  # type: Optional[netaddr.IPAddress]
+        self.local_addr = local_addr  # type: Optional[IPAddress]
         self.local_port = local_port  # type: Optional[int]
         self.local_virtual_v6_addr = local_virtual_v6_addr  # type: Optional[str]
 
@@ -90,13 +88,13 @@ class State(VPNModelBase):
             # 2 - Connection state description
             desc_string = cls._parse_string(parts[2])
             # 3 - TUN/TAP local v4 address
-            local_virtual_v4_addr = cls._parse_ipv4(parts[3])
+            local_virtual_v4_addr = cls._parse_ipaddress(parts[3])
             # 4 - Remote server address (client only)
-            remote_addr = cls._parse_ipv4(parts[4])
+            remote_addr = cls._parse_ipaddress(parts[4])
             # 5 - Remote server port (client only)
             remote_port = cls._parse_int(parts[5])
             # 6 - Local address
-            local_addr = cls._parse_ipv4(parts[6])
+            local_addr = cls._parse_ipaddress(parts[6])
             # 7 - Local port
             local_port = cls._parse_int(parts[7])
             return cls(

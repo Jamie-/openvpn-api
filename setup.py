@@ -33,7 +33,7 @@ setuptools.setup(
     keywords="openvpn monitor management",
     packages=setuptools.find_packages(exclude=["tests"]),
     python_requires=">=3.6",
-    install_requires=["netaddr", "openvpn_status",],
+    install_requires=["openvpn_status",],
     extras_require={"dev": ["nose", "black",],},
     project_urls={
         "Source": "https://github.com/Jamie-/openvpn-api",

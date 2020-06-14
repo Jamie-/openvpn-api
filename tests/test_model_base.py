@@ -1,7 +1,7 @@
 import unittest
-from openvpn_api.models import VPNModelBase
+from ipaddress import IPv4Address, IPv6Address
 
-import netaddr  # type: ignore
+from openvpn_api.models import VPNModelBase
 
 
 class ModelStub(VPNModelBase):
@@ -27,13 +27,18 @@ class TestModelBase(unittest.TestCase):
         with self.assertRaises(ValueError):
             ModelStub._parse_int(False)
 
-    def test_parse_ipv4(self):
-        self.assertIsNone(ModelStub._parse_ipv4(None))
-        self.assertEqual(netaddr.IPAddress("1.2.3.4"), ModelStub._parse_ipv4("1.2.3.4"))
-        self.assertEqual(netaddr.IPAddress("1.2.3.4"), ModelStub._parse_ipv4("  1.2.3.4  "))
-        self.assertEqual(netaddr.IPAddress("1.2.3.4"), ModelStub._parse_ipv4("1.2.3.4\n"))
-        with self.assertRaises(netaddr.core.AddrFormatError):
-            ModelStub._parse_ipv4("asd")
+    def test_parse_ipaddress(self):
+        self.assertIsNone(ModelStub._parse_ipaddress(None))
+        with self.subTest("IPv4"):
+            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("1.2.3.4"))
+            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("  1.2.3.4  "))
+            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("1.2.3.4\n"))
+        with self.subTest("IPv6"):
+            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("::1:2:3:4"))
+            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("  ::1:2:3:4  "))
+            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("::1:2:3:4\n"))
+        with self.assertRaises(ValueError):
+            ModelStub._parse_ipaddress("asd")
 
     def test_parse_notification(self):
         self.assertEqual(("BYTECOUNT", "asd"), ModelStub._parse_notification(">BYTECOUNT:asd"))
