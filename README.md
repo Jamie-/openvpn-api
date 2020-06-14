@@ -25,7 +25,6 @@ When using and developing this library, you may find the manual for the OpenVPN 
 This project requires Python >= 3.6.
 
 Other packages:
-* [netaddr](https://pypi.org/project/netaddr/)
 * [openvpn-status](https://pypi.org/project/openvpn-status/)
 
 ## Installation
@@ -165,10 +164,10 @@ The descriptive string - unclear from the OpenVPN documentation quite what this 
 'SUCCESS'
 ```
 
-The daemon's local virtual (VPN internal) address, returned as a `netaddr.IPAddress` for ease of sorting, it can be easily converted to a string with `str()`
+The daemon's local virtual (VPN internal) v4 address, returned as an `ipaddress.IPv4Address` for ease of sorting, it can be easily converted to a string with `str()`
 ```python
 >>> s.local_virtual_v4_addr
-IPAddress('10.0.0.1')
+IPv4Address('10.0.0.1')
 >>> str(s.local_virtual_v4_addr)
 '10.0.0.1'
 ```
@@ -176,7 +175,7 @@ IPAddress('10.0.0.1')
 If the daemon is in client mode, then `remote_addr` and `remote_port` will be populated with the address and port of the remote server
 ```python
 >>> s.remote_addr
-IPAddress('1.2.3.4')
+IPv4Address('1.2.3.4')
 >>> s.remote_port
 1194
 ```
@@ -184,7 +183,7 @@ IPAddress('1.2.3.4')
 If the daemon is in server mode, then `local_addr` and `local_port` will be populated with the address and port of the exposed server
 ```python
 >>> s.local_addr
-IPAddress('5.6.7.8')
+IPv4Address('5.6.7.8')
 >>> s.local_port
 1194
 ```

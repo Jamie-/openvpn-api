@@ -39,10 +39,10 @@ class VPNModelBase(abc.ABC):
 
     @classmethod
     def _parse_ipaddress(cls, raw: Optional[str]) -> Optional[IPAddress]:
-        """Return netaddr.IPAddress unless raw is empty, then return None."""
+        """Return IPAddress unless raw is empty, then return None."""
         raw = cls._parse_string(raw)
         if raw is None:
-            return raw
+            return None
         return ip_address(raw)
 
     @staticmethod
