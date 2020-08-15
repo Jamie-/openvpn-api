@@ -1,42 +1,47 @@
-import logging
-import socket
-import re
 import contextlib
+import logging
+import re
+import socket
+from enum import Enum
 from typing import Optional, Generator
 
-import openvpn_status  # type: ignore
-from openvpn_api.util import errors
+import openvpn_status
+from openvpn_status.models import Status
+
 from openvpn_api.models.state import State
 from openvpn_api.models.stats import ServerStats
+from openvpn_api.util import errors
 
 logger = logging.getLogger(__name__)
 
 
-class VPNType:
+class VPNType(str, Enum):
     IP = "ip"
     UNIX_SOCKET = "socket"
 
 
 class VPN:
-    def __init__(self, host: Optional[str] = None, port: Optional[int] = None, unix_socket: Optional[str] = None):
+    def __init__(self, host: str = None, port: int = None, unix_socket: str = None):
         if (unix_socket and host) or (unix_socket and port) or (not unix_socket and not host and not port):
             raise errors.VPNError("Must specify either socket or host and port")
-        if unix_socket:
-            self._mgmt_socket = unix_socket
-            self._type = VPNType.UNIX_SOCKET
-        else:
-            self._mgmt_host = host
-            self._mgmt_port = port
-            self._type = VPNType.IP
-        self._socket = None  # type: Optional[socket.socket]
-        # Initialise release info and daemon state caches
-        self._release = None  # type: Optional[str]
+
+        self._release: Optional[str] = None
+        self._mgmt_socket: Optional[str] = unix_socket
+        self._mgmt_host: Optional[str] = host
+        self._mgmt_port: Optional[int] = port
+
+        # release info and daemon state caches
+        self._socket: Optional[socket.socket] = None
 
     @property
-    def type(self) -> Optional[str]:
+    def type(self) -> VPNType:
         """Get VPNType object for this VPN.
         """
-        return self._type
+        if self._mgmt_socket:
+            return VPNType.UNIX_SOCKET
+        if self._mgmt_port and self._mgmt_host:
+            return VPNType.IP
+        raise ValueError("Invalid connection type")
 
     @property
     def mgmt_address(self) -> str:
@@ -52,10 +57,15 @@ class VPN:
         """
         try:
             if self.type == VPNType.IP:
+                assert self._mgmt_host is not None and self._mgmt_port is not None
                 self._socket = socket.create_connection((self._mgmt_host, self._mgmt_port), timeout=3)
-            else:
+            elif self.type == VPNType.UNIX_SOCKET:
+                assert self._mgmt_socket is not None
                 self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 self._socket.connect(self._mgmt_socket)
+            else:
+                raise ValueError("Invalid connection type")
+
             resp = self._socket_recv()
             assert resp.startswith(">INFO"), "Did not get expected response from interface when opening socket."
             return True
@@ -76,7 +86,7 @@ class VPN:
     def is_connected(self) -> bool:
         """Determine if management interface socket is connected or not.
         """
-        return self._socket != None
+        return self._socket is not None
 
     @contextlib.contextmanager
     def connection(self) -> Generator:
@@ -174,7 +184,7 @@ class VPN:
         raw = self.send_command("load-stats")
         return ServerStats.parse_raw(raw)
 
-    def get_status(self):
+    def get_status(self) -> Status:
         """Get current status from VPN.
 
         Uses openvpn-status library to parse status output:

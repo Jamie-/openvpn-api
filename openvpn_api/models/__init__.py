@@ -30,9 +30,9 @@ class VPNModelBase(abc.ABC):
         return raw
 
     @classmethod
-    def _parse_int(self, raw: Optional[str]) -> Optional[int]:
+    def _parse_int(cls, raw: Optional[str]) -> Optional[int]:
         """Return int if raw is parsable unless raw is empty, then return None."""
-        raw = self._parse_string(raw)
+        raw = cls._parse_string(raw)
         if raw is None:
             return raw
         return int(raw)
@@ -52,8 +52,8 @@ class VPNModelBase(abc.ABC):
             message = line[1:].split(":", 1)
             assert len(message) == 2, "Malformed notification"
             if message[0] in constants._NOTIFICATION_PREFIXES:
-                return (message[0], message[1])
-        return (None, None)
+                return message[0], message[1]
+        return None, None
 
     @classmethod
     def _is_notification(cls, line: str) -> bool:

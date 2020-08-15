@@ -43,27 +43,27 @@ class State(VPNModelBase):
 
     def __init__(
         self,
-        up_since: Optional[datetime.datetime] = None,
-        state_name: Optional[str] = None,
-        desc_string: Optional[str] = None,
-        local_virtual_v4_addr: Optional[IPAddress] = None,
-        remote_addr: Optional[IPAddress] = None,
-        remote_port: Optional[int] = None,
-        local_addr: Optional[IPAddress] = None,
-        local_port: Optional[int] = None,
-        local_virtual_v6_addr: Optional[str] = None,
+        up_since: datetime.datetime = None,
+        state_name: str = None,
+        desc_string: str = None,
+        local_virtual_v4_addr: IPAddress = None,
+        remote_addr: IPAddress = None,
+        remote_port: int = None,
+        local_addr: IPAddress = None,
+        local_port: int = None,
+        local_virtual_v6_addr: str = None,
     ) -> None:
         # Datetime daemon started?
-        self.up_since = up_since  # type: Optional[datetime.datetime]
+        self.up_since: Optional[datetime.datetime] = up_since
         # See states list in module docstring
-        self.state_name = state_name  # type: Optional[str]
-        self.desc_string = desc_string  # type: Optional[str]
-        self.local_virtual_v4_addr = local_virtual_v4_addr  # type: Optional[IPAddress]
-        self.remote_addr = remote_addr  # type: Optional[IPAddress]
-        self.remote_port = remote_port  # type: Optional[int]
-        self.local_addr = local_addr  # type: Optional[IPAddress]
-        self.local_port = local_port  # type: Optional[int]
-        self.local_virtual_v6_addr = local_virtual_v6_addr  # type: Optional[str]
+        self.state_name: Optional[str] = state_name
+        self.desc_string: Optional[str] = desc_string
+        self.local_virtual_v4_addr: Optional[IPAddress] = local_virtual_v4_addr
+        self.remote_addr: Optional[IPAddress] = remote_addr
+        self.remote_port: Optional[int] = remote_port
+        self.local_addr: Optional[IPAddress] = local_addr
+        self.local_port: Optional[int] = local_port
+        self.local_virtual_v6_addr: Optional[str] = local_virtual_v6_addr
 
     @property
     def mode(self) -> str:
