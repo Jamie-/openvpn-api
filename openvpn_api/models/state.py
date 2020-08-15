@@ -81,6 +81,7 @@ class State(VPNModelBase):
             if line.strip() == "END":
                 break
             parts = line.split(",")
+            assert len(parts) >= 8, "Received too few parts to parse state."
             # 0 - Unix timestamp of server start (UTC?)
             up_since = datetime.datetime.utcfromtimestamp(int(parts[0])) if parts[0] != "" else None
             # 1 - Connection state
