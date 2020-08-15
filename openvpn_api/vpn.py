@@ -25,13 +25,13 @@ class VPN:
         if (unix_socket and host) or (unix_socket and port) or (not unix_socket and not host and not port):
             raise errors.VPNError("Must specify either socket or host and port")
 
-        self._release: Optional[str] = None
         self._mgmt_socket: Optional[str] = unix_socket
         self._mgmt_host: Optional[str] = host
         self._mgmt_port: Optional[int] = port
-
-        # release info and daemon state caches
         self._socket: Optional[socket.socket] = None
+
+        # Release info cache
+        self._release: Optional[str] = None
 
     @property
     def type(self) -> VPNType:
