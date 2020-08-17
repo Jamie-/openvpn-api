@@ -85,9 +85,7 @@ class VPN:
 
             self._socket_file = self._socket.makefile("r")
 
-            self._rx_thread = threading.Thread(
-                target=self._socket_rx_thread, daemon=True, name="mgmt-listener"
-            )
+            self._rx_thread = threading.Thread(target=self._socket_rx_thread, daemon=True, name="mgmt-listener")
             self._tx_thread = threading.Thread(target=self._socket_tx_thread, daemon=True, name="mgmt-writer")
             self._rx_thread.start()
             self._tx_thread.start()

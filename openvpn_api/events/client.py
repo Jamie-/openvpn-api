@@ -1,16 +1,8 @@
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-from openvpn_api.util import errors
+from openvpn_api.util import errors, parsing
 from openvpn_api import events
-
-EVENT_TYPE_REGEXES = {
-    "CONNECT": re.compile(r"^>CLIENT:CONNECT,(?P<CID>([^,]+)),(?P<KID>([^,]+))$"),
-    "REAUTH": re.compile(r"^>CLIENT:REAUTH,(?P<CID>([^,]+)),(?P<KID>([^,]+))$"),
-    "ESTABLISHED": re.compile(r"^>CLIENT:ESTABLISHED,(?P<CID>([^,]+))$"),
-    "DISCONNECT": re.compile(r"^>CLIENT:DISCONNECT,(?P<CID>([^,]+))$"),
-    "ADDRESS": re.compile(r"^>CLIENT:ADDRESS,(?P<CID>([^,]+)),(?P<ADDR>([^,]+)),(?P<PRI>([^,]+))$"),
-}
 
 FIRST_LINE_REGEX = re.compile(r"^>CLIENT:(?P<event>([^,]+))(.*)$")
 ENV_REGEX = re.compile(r">CLIENT:ENV,(?P<key>([^=]+))=(?P<value>(.+))")
@@ -18,16 +10,32 @@ ENV_REGEX = re.compile(r">CLIENT:ENV,(?P<key>([^=]+))=(?P<value>(.+))")
 
 @events.register_event
 class ClientEvent(events.BaseEvent):
-    def __init__(self, event_type, cid=None, kid=None, pri=None, addr=None, environment: Dict[str, str] = dict):
+    EVENT_TYPE_REGEXES = {
+        "CONNECT": re.compile(r"^>CLIENT:CONNECT,(?P<client_id>([^,]+)),(?P<key_id>([^,]+))$"),
+        "REAUTH": re.compile(r"^>CLIENT:REAUTH,(?P<client_id>([^,]+)),(?P<key_id>([^,]+))$"),
+        "ESTABLISHED": re.compile(r"^>CLIENT:ESTABLISHED,(?P<client_id>([^,]+))$"),
+        "DISCONNECT": re.compile(r"^>CLIENT:DISCONNECT,(?P<client_id>([^,]+))$"),
+        "ADDRESS": re.compile(r"^>CLIENT:ADDRESS,(?P<client_id>([^,]+)),(?P<address>([^,]+)),(?P<primary>([^,]+))$"),
+    }
+
+    def __init__(
+        self,
+        event_type,
+        client_id: Optional[int] = None,
+        key_id: Optional[int] = None,
+        primary: Optional[int] = None,
+        address=None,
+        environment: Dict[str, str] = dict,
+    ):
         self.type = event_type
-        self.cid = int(cid) if cid is not None else None
-        self.kid = int(kid) if kid is not None else None
-        self.pri = int(pri) if pri is not None else None
-        self.addr = int(addr) if addr is not None else None
+        self.client_id = parsing.parse_int(client_id)
+        self.key_id = parsing.parse_int(key_id)
+        self.primary = parsing.parse_int(primary)
+        self.address = address
         self.environment = environment
 
-    @staticmethod
-    def is_input_began(line: str) -> bool:
+    @classmethod
+    def is_input_began(cls, line: str) -> bool:
         if not line:
             return False
 
@@ -36,7 +44,7 @@ class ClientEvent(events.BaseEvent):
             return False
 
         event_type = match.group("event")
-        if event_type not in EVENT_TYPE_REGEXES:
+        if event_type not in cls.EVENT_TYPE_REGEXES:
             return False
 
         return True
@@ -45,8 +53,8 @@ class ClientEvent(events.BaseEvent):
     def is_input_ended(line: str) -> bool:
         return line and (line.strip().startswith(">CLIENT:ADDRESS,") or line.strip() == ">CLIENT:ENV,END")
 
-    @staticmethod
-    def parse_raw(lines: List[str]) -> "ClientEvent":
+    @classmethod
+    def parse_raw(cls, lines: List[str]) -> "ClientEvent":
         if not lines:
             raise errors.ParseError("Event raw input is empty.")
 
@@ -58,21 +66,21 @@ class ClientEvent(events.BaseEvent):
 
         event_type = match.group("event")
 
-        if event_type not in EVENT_TYPE_REGEXES:
+        if event_type not in cls.EVENT_TYPE_REGEXES:
             raise errors.ParseError(
-                "This event type (%s) is not supported (Supported events: %s)" % (event_type, EVENT_TYPE_REGEXES)
+                "This event type (%s) is not supported (Supported events: %s)" % (event_type, cls.EVENT_TYPE_REGEXES)
             )
 
-        match = EVENT_TYPE_REGEXES[event_type].match(first_line)
+        match = cls.EVENT_TYPE_REGEXES[event_type].match(first_line)
 
         if not match:
             raise errors.ParseError("Syntax error in first line of client event (Line: %s)" % first_line)
 
         first_line_data = match.groupdict()
-        cid = int(first_line_data["CID"]) if "CID" in first_line_data else None
-        kid = int(first_line_data["KID"]) if "KID" in first_line_data else None
-        pri = int(first_line_data["KID"]) if "KID" in first_line_data else None
-        addr = int(first_line_data["ADDR"]) if "ADDR" in first_line_data else None
+        client_id = int(first_line_data["client_id"]) if "client_id" in first_line_data else None
+        key_id = int(first_line_data["key_id"]) if "key_id" in first_line_data else None
+        primary = int(first_line_data["key_id"]) if "key_id" in first_line_data else None
+        address = int(first_line_data["address"]) if "address" in first_line_data else None
         environment = {}
 
         if event_type != "ADDRESS":
@@ -92,4 +100,11 @@ class ClientEvent(events.BaseEvent):
             if not environment:
                 raise errors.ParseError("This event type (%s) doesn't support empty environment." % event_type)
 
-        return ClientEvent(event_type=event_type, cid=cid, kid=kid, pri=pri, addr=addr, environment=environment)
+        return ClientEvent(
+            event_type=event_type,
+            client_id=client_id,
+            key_id=key_id,
+            primary=primary,
+            address=address,
+            environment=environment,
+        )

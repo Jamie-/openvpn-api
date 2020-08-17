@@ -116,10 +116,11 @@ class TestVPNModel(unittest.TestCase):
         mock_socket_send.assert_called_once_with("client-kill 1\n")
         mock_socket_recv.assert_called_once()
 
+    @patch("openvpn_api.vpn.VPN.stop_event_loop")
     @patch("openvpn_api.vpn.VPN._socket_recv")
     @patch("openvpn_api.vpn.VPN._socket_send")
     @patch("openvpn_api.vpn.socket.create_connection")
-    def test_send_sigterm(self, mock_create_connection, mock_socket_send, mock_socket_recv):
+    def test_send_sigterm(self, mock_create_connection, mock_socket_send, mock_socket_recv, mock_stop_event_loop):
         vpn = VPN(host="localhost", port=1234)
         vpn.connect()
         mock_create_connection.assert_called_once_with(("localhost", 1234), timeout=ANY)

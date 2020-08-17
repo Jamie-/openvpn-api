@@ -34,8 +34,9 @@ The output format consists of up to 9 comma-separated parameters:
 import datetime
 from typing import Optional
 
-from openvpn_api.models import VPNModelBase, IPAddress
-from openvpn_api.util import errors
+from openvpn_api.models import VPNModelBase
+from openvpn_api.util import errors, parsing
+from openvpn_api.util.parsing import IPAddress
 
 
 class State(VPNModelBase):
@@ -85,19 +86,19 @@ class State(VPNModelBase):
             # 0 - Unix timestamp of server start (UTC?)
             up_since = datetime.datetime.utcfromtimestamp(int(parts[0])) if parts[0] != "" else None
             # 1 - Connection state
-            state_name = cls._parse_string(parts[1])
+            state_name = parsing.parse_string(parts[1])
             # 2 - Connection state description
-            desc_string = cls._parse_string(parts[2])
+            desc_string = parsing.parse_string(parts[2])
             # 3 - TUN/TAP local v4 address
-            local_virtual_v4_addr = cls._parse_ipaddress(parts[3])
+            local_virtual_v4_addr = parsing.parse_ipaddress(parts[3])
             # 4 - Remote server address (client only)
-            remote_addr = cls._parse_ipaddress(parts[4])
+            remote_addr = parsing.parse_ipaddress(parts[4])
             # 5 - Remote server port (client only)
-            remote_port = cls._parse_int(parts[5])
+            remote_port = parsing.parse_int(parts[5])
             # 6 - Local address
-            local_addr = cls._parse_ipaddress(parts[6])
+            local_addr = parsing.parse_ipaddress(parts[6])
             # 7 - Local port
-            local_port = cls._parse_int(parts[7])
+            local_port = parsing.parse_int(parts[7])
             return cls(
                 up_since=up_since,
                 state_name=state_name,

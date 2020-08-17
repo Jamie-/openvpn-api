@@ -1,6 +1,6 @@
 import unittest
 
-from openvpn_api.events import client as ClientEvent
+from openvpn_api.events.client import ClientEvent
 from openvpn_api.util import errors
 
 
@@ -38,8 +38,8 @@ class TestEventClient(unittest.TestCase):
             ]
         )
         self.assertEqual("CONNECT", event.type)
-        self.assertEqual(14, event.cid)
-        self.assertEqual(43, event.kid)
+        self.assertEqual(14, event.client_id)
+        self.assertEqual(43, event.key_id)
         self.assertEqual({"common_name": "test_cn", "time_unix": "12343212343"}, event.environment)
 
     def test_deserialize_reauth_event(self):
@@ -52,8 +52,8 @@ class TestEventClient(unittest.TestCase):
             ]
         )
         self.assertEqual("REAUTH", event.type)
-        self.assertEqual(14, event.cid)
-        self.assertEqual(43, event.kid)
+        self.assertEqual(14, event.client_id)
+        self.assertEqual(43, event.key_id)
         self.assertEqual({"common_name": "test_cn", "time_unix": "12343212343"}, event.environment)
 
     def test_deserialize_established_event(self):
@@ -66,7 +66,7 @@ class TestEventClient(unittest.TestCase):
             ]
         )
         self.assertEqual("ESTABLISHED", event.type)
-        self.assertEqual(14, event.cid)
+        self.assertEqual(14, event.client_id)
         self.assertEqual({"common_name": "test_cn", "time_unix": "12343212343"}, event.environment)
 
     def test_deserialize_disconnect_event(self):
@@ -79,7 +79,7 @@ class TestEventClient(unittest.TestCase):
             ]
         )
         self.assertEqual("DISCONNECT", event.type)
-        self.assertEqual(14, event.cid)
+        self.assertEqual(14, event.client_id)
         self.assertEqual({"common_name": "test_cn", "time_unix": "12343212343"}, event.environment)
 
     def test_empty_environment(self):

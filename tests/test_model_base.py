@@ -10,36 +10,6 @@ class ModelStub(VPNModelBase):
 
 
 class TestModelBase(unittest.TestCase):
-    def test_parse_string(self):
-        self.assertIsNone(ModelStub._parse_string(None))
-        self.assertIsNone(ModelStub._parse_string(""))
-        self.assertEqual(ModelStub._parse_string("a"), "a")
-        self.assertEqual(ModelStub._parse_string(" a "), "a")
-        self.assertEqual(ModelStub._parse_string(1), "1")
-        self.assertEqual(ModelStub._parse_string(False), "False")
-
-    def test_parse_int(self):
-        self.assertIsNone(ModelStub._parse_int(None))
-        self.assertEqual(ModelStub._parse_int(0), 0)
-        self.assertEqual(ModelStub._parse_int(1), 1)
-        with self.assertRaises(ValueError):
-            ModelStub._parse_int("a")
-        with self.assertRaises(ValueError):
-            ModelStub._parse_int(False)
-
-    def test_parse_ipaddress(self):
-        self.assertIsNone(ModelStub._parse_ipaddress(None))
-        with self.subTest("IPv4"):
-            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("1.2.3.4"))
-            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("  1.2.3.4  "))
-            self.assertEqual(IPv4Address("1.2.3.4"), ModelStub._parse_ipaddress("1.2.3.4\n"))
-        with self.subTest("IPv6"):
-            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("::1:2:3:4"))
-            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("  ::1:2:3:4  "))
-            self.assertEqual(IPv6Address("::1:2:3:4"), ModelStub._parse_ipaddress("::1:2:3:4\n"))
-        with self.assertRaises(ValueError):
-            ModelStub._parse_ipaddress("asd")
-
     def test_parse_notification(self):
         self.assertEqual(("BYTECOUNT", "asd"), ModelStub._parse_notification(">BYTECOUNT:asd"))
         self.assertEqual(("CLIENT", "asd:qwe"), ModelStub._parse_notification(">CLIENT:asd:qwe"))

@@ -1,10 +1,7 @@
 import abc
-from ipaddress import IPv4Address, IPv6Address, ip_address
 from typing import Optional, Tuple, Union
 
 from openvpn_api import constants
-
-IPAddress = Union[IPv4Address, IPv6Address]
 
 
 class VPNModelBase(abc.ABC):
@@ -17,33 +14,6 @@ class VPNModelBase(abc.ABC):
         of the model.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def _parse_string(raw: Optional[str]) -> Optional[str]:
-        """Return stripped raw unless string is empty raw, then return None.
-        """
-        if raw is None:
-            return None
-        raw = str(raw).strip()
-        if len(raw) == 0:
-            return None
-        return raw
-
-    @classmethod
-    def _parse_int(cls, raw: Optional[str]) -> Optional[int]:
-        """Return int if raw is parsable unless raw is empty, then return None."""
-        raw = cls._parse_string(raw)
-        if raw is None:
-            return raw
-        return int(raw)
-
-    @classmethod
-    def _parse_ipaddress(cls, raw: Optional[str]) -> Optional[IPAddress]:
-        """Return IPAddress unless raw is empty, then return None."""
-        raw = cls._parse_string(raw)
-        if raw is None:
-            return None
-        return ip_address(raw)
 
     @staticmethod
     def _parse_notification(line: str) -> Tuple[Optional[str], Optional[str]]:

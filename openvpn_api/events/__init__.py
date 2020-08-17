@@ -7,6 +7,7 @@ from openvpn_api.events.base import BaseEvent
 # Registered server-transmitted events
 _events = []
 
+
 def register_event(event_type: BaseEvent) -> BaseEvent:
     """Register an event handler."""
     if event_type not in _events:
