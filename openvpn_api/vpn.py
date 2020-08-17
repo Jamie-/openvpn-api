@@ -99,8 +99,6 @@ class VPN:
             if _quit:
                 self._socket_send("quit\n")
             assert self._internal_tx is not None and self._internal_rx is not None
-            self._internal_tx.send(b"\x01")  # Wake socket thread to allow it to close
-
             self.stop_event_loop()
             self._internal_rx.close()
             self._internal_tx.close()
@@ -124,7 +122,7 @@ class VPN:
             self.disconnect()
 
     def _socket_thread_runner(self):
-        """This thread handles the socket's output and handles any events before adding the output to the receive queue.
+        """Thread to handle socket I/O and event callbacks.
         """
         active_event_lines = []
         while not self._stop_thread.is_set():
@@ -199,13 +197,16 @@ class VPN:
     def stop_event_loop(self) -> None:
         """Halt the event loop, stops handling of socket communications"""
         self._stop_thread.set()
+        self._internal_tx.send(b"\x01")  # Wake socket thread to allow it to close
         if self._socket_thread is not None:
             self._socket_thread.join()
             self._socket_thread = None
         self._stop_thread.clear()
 
     def register_callback(self, callable: Callable) -> None:
-        """Register a callback with the event handler for incoming messages."""
+        """Register a callback with the event handler for incoming messages.
+        Callbacks should be kept as lightweight as possible and not perform any heavy or time consuming computation.
+        """
         self._callbacks.add(callable)
 
     def raise_event(self, event: events.BaseEvent) -> None:
