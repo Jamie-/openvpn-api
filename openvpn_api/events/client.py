@@ -1,9 +1,11 @@
 import re
+import logging
 from typing import List, Dict, Optional
 
 from openvpn_api.util import errors
 from openvpn_api import events
 
+logger = logging.getLogger("vpn.events.client")
 FIRST_LINE_REGEX = re.compile(r"^>CLIENT:(?P<event>([^,]+))(.*)$")
 ENV_REGEX = re.compile(r">CLIENT:ENV,(?P<key>([^=]+))=(?P<value>(.+))")
 
@@ -49,11 +51,12 @@ class ClientEvent(events.BaseEvent):
         if event_type not in cls.EVENT_TYPE_REGEXES:
             return False
 
+        logger.debug("Matched client event of type: %r", event_type)
         return True
 
     @classmethod
     def has_ended(cls, line: str) -> bool:
-        return line and (line.strip().startswith(">CLIENT:ADDRESS,") or line.strip() == ">CLIENT:ENV,END")
+        return bool(line) and (line.strip().startswith(">CLIENT:ADDRESS,") or line.strip() == ">CLIENT:ENV,END")
 
     @classmethod
     def parse_raw(cls, lines: List[str]) -> "ClientEvent":

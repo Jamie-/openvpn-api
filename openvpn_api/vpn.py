@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import re
+import select
 import socket
 import queue
 import threading
@@ -36,17 +37,15 @@ class VPN:
         # Release info cache
         self._release: Optional[str] = None
 
-        self._socket_file = None
-        self._socket_io_lock = threading.Lock()
-
         # Event system
         self._callbacks: Set = set()
-        self._rx_thread: Optional[threading.Thread] = None
-        self._tx_thread: Optional[threading.Thread] = None
-        self._run: bool = True
-
+        self._socket_thread: Optional[threading.Thread] = None
+        self._stop_thread: threading.Event = threading.Event()
         self._recv_queue: queue.Queue = queue.Queue()
         self._send_queue: queue.Queue = queue.Queue()
+        self._internal_rx: socket.socket
+        self._internal_tx: socket.socket
+        self._internal_rx, self._internal_tx = socket.socketpair()
 
         self._active_event = None
 
@@ -83,12 +82,8 @@ class VPN:
             else:
                 raise ValueError("Invalid connection type")
 
-            self._socket_file = self._socket.makefile("r")
-
-            self._rx_thread = threading.Thread(target=self._socket_rx_thread, daemon=True, name="mgmt-listener")
-            self._tx_thread = threading.Thread(target=self._socket_tx_thread, daemon=True, name="mgmt-writer")
-            self._rx_thread.start()
-            self._tx_thread.start()
+            self._socket_thread = threading.Thread(target=self._socket_thread_runner, daemon=True, name="vpn-io")
+            self._socket_thread.start()
 
             resp = self._socket_recv()
             assert resp.startswith(">INFO"), "Did not get expected response from interface when opening socket."
@@ -103,9 +98,9 @@ class VPN:
         if self._socket is not None:
             if _quit:
                 self._socket_send("quit\n")
+            self._internal_tx.send(b"\x01")  # Wake socket thread to allow it to close
 
             self.stop_event_loop()
-            self._socket_file.close()
             self._socket.close()
             self._socket = None
 
@@ -125,42 +120,50 @@ class VPN:
         finally:
             self.disconnect()
 
-    def _socket_rx_thread(self):
+    def _socket_thread_runner(self):
         """This thread handles the socket's output and handles any events before adding the output to the receive queue.
         """
         active_event_lines = []
-        while self._run:
-            line = self._socket_file.readline().strip()
+        while not self._stop_thread.is_set():
+            socks, _, _ = select.select((self._socket, self._internal_rx), (), ())
 
-            if self._active_event is None:
-                for event in events.get_event_types():
-                    if event.has_begun(line):
-                        active_event_lines = []
-                        if event.has_ended(line):
-                            self.raise_event(event.parse_raw([line]))
+            for sock in socks:
+                if sock is self._socket:
+                    raw = self._socket.recv(4096).decode("utf-8")
+                    for line in raw.split("\n"):  # Sometimes lines are sent bundled up
+                        if line == "":
+                            continue
+
+                        if self._active_event is None:
+                            for event in events.get_event_types():
+                                if event.has_begun(line):
+                                    logger.debug("Event %s detected", type(event).__name__)
+                                    active_event_lines = []
+                                    if event.has_ended(line):
+                                        logger.debug("Event %s received", type(event).__name__)
+                                        self.raise_event(event.parse_raw([line]))
+                                    else:
+                                        self._active_event = event
+                                        active_event_lines.append(line)
+                                    break
+                            else:
+                                self._recv_queue.put(line)
                         else:
-                            self._socket_io_lock.acquire()
-                            self._active_event = event
                             active_event_lines.append(line)
-                        break
-                else:
-                    self._recv_queue.put(line)
-            else:
-                active_event_lines.append(line)
-                if self._active_event.has_ended(line):
-                    self.raise_event(self._active_event.parse_raw(active_event_lines))
-                    active_event_lines = []
-                    self._active_event = None
-                    self._socket_io_lock.release()
+                            if self._active_event.has_ended(line):
+                                logger.debug("Event %s received", type(self._active_event).__name__)
+                                self.raise_event(self._active_event.parse_raw(active_event_lines))
+                                active_event_lines = []
+                                self._active_event = None
 
-    def _socket_tx_thread(self):
-        while self._run:
-            try:
-                data = self._send_queue.get()
-                self._socket_io_lock.acquire()
-                self._socket.send(bytes(data, "utf-8"))
-            finally:
-                self._socket_io_lock.release()
+                elif sock is self._internal_rx:
+                    status = self._internal_rx.recv(1)  # Fetch status code from internal socket
+                    if status == b"\x00":  # Send data if OK
+                        try:
+                            data = self._send_queue.get(block=False)
+                            self._socket.send(bytes(data, "utf-8"))
+                        except queue.Empty:
+                            pass
 
     def _socket_send(self, data) -> None:
         """Convert data to bytes and send to socket.
@@ -168,6 +171,7 @@ class VPN:
         if self._socket is None:
             raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         self._send_queue.put(data)
+        self._internal_tx.send(b"\x00")  # Wake socket thread to send data
 
     def _socket_recv(self) -> str:
         """Receive bytes from socket and convert to string.
@@ -190,14 +194,11 @@ class VPN:
 
     def stop_event_loop(self) -> None:
         """Halt the event loop, stops handling of socket communications"""
-        self._run = False
-        if self._rx_thread is not None:
-            self._rx_thread.join()
-            self._rx_thread = None
-        if self._tx_thread is not None:
-            self._tx_thread.join()
-            self._tx_thread = None
-        self._run = True
+        self._stop_thread.set()
+        if self._socket_thread is not None:
+            self._socket_thread.join()
+            self._socket_thread = None
+        self._stop_thread.clear()
 
     def register_callback(self, callable: Callable) -> None:
         """Register a callback with the event handler for incoming messages."""
