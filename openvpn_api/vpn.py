@@ -41,8 +41,9 @@ class VPN:
 
         # Event system
         self._callbacks = set()
-        self._listener_thread = None
-        self._writer_thread = None
+        self._rx_thread: Optional[threading.Thread] = None
+        self._tx_thread: Optional[threading.Thread] = None
+        self._run = True
 
         self._recv_queue = queue.Queue()
         self._send_queue = queue.Queue()
@@ -84,13 +85,12 @@ class VPN:
 
             self._socket_file = self._socket.makefile("r")
 
-            self._listener_thread = threading.Thread(
-                target=self._socket_listener_thread, daemon=True, name="mgmt-listener"
+            self._rx_thread = threading.Thread(
+                target=self._socket_rx_thread, daemon=True, name="mgmt-listener"
             )
-            self._writer_thread = threading.Thread(target=self._socket_writer_thread, daemon=True, name="mgmt-writer")
-
-            self._listener_thread.start()
-            self._writer_thread.start()
+            self._tx_thread = threading.Thread(target=self._socket_tx_thread, daemon=True, name="mgmt-writer")
+            self._rx_thread.start()
+            self._tx_thread.start()
 
             resp = self._socket_recv()
             assert resp.startswith(">INFO"), "Did not get expected response from interface when opening socket."
@@ -106,6 +106,7 @@ class VPN:
             if _quit:
                 self._socket_send("quit\n")
 
+            self.stop_event_loop()
             self._socket_file.close()
             self._socket.close()
             self._socket = None
@@ -126,14 +127,11 @@ class VPN:
         finally:
             self.disconnect()
 
-    def _socket_listener_thread(self):
+    def _socket_rx_thread(self):
         """This thread handles the socket's output and handles any events before adding the output to the receive queue.
         """
         active_event_lines = []
-        while True:
-            if not self.is_connected:
-                break
-
+        while self._run:
             line = self._socket_file.readline().strip()
 
             if self._active_event is None:
@@ -157,11 +155,8 @@ class VPN:
                     self._active_event = None
                     self._socket_io_lock.release()
 
-    def _socket_writer_thread(self):
-        while True:
-            if not self.is_connected:
-                break
-
+    def _socket_tx_thread(self):
+        while self._run:
             try:
                 data = self._send_queue.get()
                 self._socket_io_lock.acquire()
@@ -194,6 +189,17 @@ class VPN:
                 resp += self._socket_recv()
         logger.debug("Cmd response: %r", resp)
         return resp
+
+    def stop_event_loop(self):
+        """Halt the event loop, stops handling of socket communications"""
+        self._run = False
+        if self._rx_thread is not None:
+            self._rx_thread.join()
+            self._rx_thread = None
+        if self._tx_thread is not None:
+            self._tx_thread.join()
+            self._tx_thread = None
+        self._run = True
 
     def register_callback(self, callable: Callable) -> None:
         """Register a callback with the event handler for incoming messages."""
