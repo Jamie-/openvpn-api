@@ -43,9 +43,8 @@ class VPN:
         self._stop_thread: threading.Event = threading.Event()
         self._recv_queue: queue.Queue = queue.Queue()
         self._send_queue: queue.Queue = queue.Queue()
-        self._internal_rx: socket.socket
-        self._internal_tx: socket.socket
-        self._internal_rx, self._internal_tx = socket.socketpair()
+        self._internal_rx: Optional[socket.socket] = None
+        self._internal_tx: Optional[socket.socket] = None
 
         self._active_event = None
 
@@ -82,6 +81,7 @@ class VPN:
             else:
                 raise ValueError("Invalid connection type")
 
+            self._internal_rx, self._internal_tx = socket.socketpair()
             self._socket_thread = threading.Thread(target=self._socket_thread_runner, daemon=True, name="vpn-io")
             self._socket_thread.start()
 
@@ -98,9 +98,12 @@ class VPN:
         if self._socket is not None:
             if _quit:
                 self._socket_send("quit\n")
+            assert self._internal_tx is not None and self._internal_rx is not None
             self._internal_tx.send(b"\x01")  # Wake socket thread to allow it to close
 
             self.stop_event_loop()
+            self._internal_rx.close()
+            self._internal_tx.close()
             self._socket.close()
             self._socket = None
 
@@ -171,6 +174,7 @@ class VPN:
         if self._socket is None:
             raise errors.NotConnectedError("You must be connected to the management interface to issue commands.")
         self._send_queue.put(data)
+        assert self._internal_tx is not None
         self._internal_tx.send(b"\x00")  # Wake socket thread to send data
 
     def _socket_recv(self) -> str:
