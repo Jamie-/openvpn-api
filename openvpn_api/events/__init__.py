@@ -1,17 +1,27 @@
+import pathlib
 import importlib
-import typing
+from typing import List
 
-from openvpn_api.events import client
+from openvpn_api.events.base import BaseEvent
 
-event_types = [importlib.import_module(".client", __name__)]
+# Registered server-transmitted events
+_events = []
 
-_callbacks = []
+def register_event(event_type: BaseEvent) -> BaseEvent:
+    """Register an event handler."""
+    if event_type not in _events:
+        _events.append(event_type)
+    return event_type
 
 
-def raise_event(event: typing.Type) -> None:
-    for callback in _callbacks:
-        callback(event)
+def get_event_types() -> List[BaseEvent]:
+    """Get all registered event types."""
+    return _events.copy()
 
 
-def register_callback(callback: typing.Callable[[typing.Type], typing.Any]) -> None:
-    _callbacks.append(callback)
+# Import all standard events we have so they get registered
+for _file in pathlib.Path(__file__).parent.glob("*.py"):
+    if _file.name.startswith("_"):
+        continue
+    importlib.import_module(f"openvpn_api.events.{_file.stem}")
+del _file  # Remove _file from module namespace after we're done

@@ -5,7 +5,7 @@ import socket
 import queue
 import threading
 from enum import Enum
-from typing import Optional, Generator
+from typing import Optional, Generator, Callable
 
 import openvpn_status
 from openvpn_status.models import Status
@@ -39,6 +39,8 @@ class VPN:
         self._socket_file = None
         self._socket_io_lock = threading.Lock()
 
+        # Event system
+        self._callbacks = set()
         self._listener_thread = None
         self._writer_thread = None
 
@@ -135,11 +137,11 @@ class VPN:
             line = self._socket_file.readline().strip()
 
             if self._active_event is None:
-                for event in events.event_types:
+                for event in events.get_event_types():
                     if event.is_input_began(line):
                         active_event_lines = []
                         if event.is_input_ended(line):
-                            events.raise_event(event.parse_raw([line]))
+                            self.raise_event(event.parse_raw([line]))
                         else:
                             self._socket_io_lock.acquire()
                             self._active_event = event
@@ -150,7 +152,7 @@ class VPN:
             else:
                 active_event_lines.append(line)
                 if self._active_event.is_input_ended(line):
-                    events.raise_event(self._active_event.parse_raw(active_event_lines))
+                    self.raise_event(self._active_event.parse_raw(active_event_lines))
                     active_event_lines = []
                     self._active_event = None
                     self._socket_io_lock.release()
@@ -192,6 +194,18 @@ class VPN:
                 resp += self._socket_recv()
         logger.debug("Cmd response: %r", resp)
         return resp
+
+    def register_callback(self, callable: Callable) -> None:
+        """Register a callback with the event handler for incoming messages."""
+        self._callbacks.add(callable)
+
+    def raise_event(self, event: events.BaseEvent) -> None:
+        """Handler for a raised event, calls all registered callables."""
+        for func in self._callbacks:
+            try:
+                func(event)
+            except Exception:  # Ignore exceptions as we want to call the other handlers
+                pass
 
     # Interface commands and parsing
 
