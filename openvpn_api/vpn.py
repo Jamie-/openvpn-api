@@ -5,7 +5,7 @@ import socket
 import queue
 import threading
 from enum import Enum
-from typing import Optional, Generator, Callable
+from typing import Optional, Generator, Callable, Set
 
 import openvpn_status
 from openvpn_status.models import Status
@@ -40,13 +40,13 @@ class VPN:
         self._socket_io_lock = threading.Lock()
 
         # Event system
-        self._callbacks = set()
+        self._callbacks: Set = set()
         self._rx_thread: Optional[threading.Thread] = None
         self._tx_thread: Optional[threading.Thread] = None
-        self._run = True
+        self._run: bool = True
 
-        self._recv_queue = queue.Queue()
-        self._send_queue = queue.Queue()
+        self._recv_queue: queue.Queue = queue.Queue()
+        self._send_queue: queue.Queue = queue.Queue()
 
         self._active_event = None
 
@@ -190,7 +190,7 @@ class VPN:
         logger.debug("Cmd response: %r", resp)
         return resp
 
-    def stop_event_loop(self):
+    def stop_event_loop(self) -> None:
         """Halt the event loop, stops handling of socket communications"""
         self._run = False
         if self._rx_thread is not None:
