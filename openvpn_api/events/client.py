@@ -1,7 +1,7 @@
 import re
 from typing import List, Dict, Optional
 
-from openvpn_api.util import errors, parsing
+from openvpn_api.util import errors
 from openvpn_api import events
 
 FIRST_LINE_REGEX = re.compile(r"^>CLIENT:(?P<event>([^,]+))(.*)$")
@@ -21,21 +21,23 @@ class ClientEvent(events.BaseEvent):
     def __init__(
         self,
         event_type,
-        client_id: Optional[int] = None,
+        client_id: int,
         key_id: Optional[int] = None,
         primary: Optional[int] = None,
         address=None,
-        environment: Dict[str, str] = dict,
+        environment: Dict[str, str] = None,
     ):
         self.type = event_type
-        self.client_id = parsing.parse_int(client_id)
-        self.key_id = parsing.parse_int(key_id)
-        self.primary = parsing.parse_int(primary)
+        self.client_id = client_id
+        self.key_id = key_id
+        self.primary = primary
         self.address = address
         self.environment = environment
+        if self.environment is None:
+            self.environment = {}
 
     @classmethod
-    def is_input_began(cls, line: str) -> bool:
+    def has_begun(cls, line: str) -> bool:
         if not line:
             return False
 
@@ -49,8 +51,8 @@ class ClientEvent(events.BaseEvent):
 
         return True
 
-    @staticmethod
-    def is_input_ended(line: str) -> bool:
+    @classmethod
+    def has_ended(cls, line: str) -> bool:
         return line and (line.strip().startswith(">CLIENT:ADDRESS,") or line.strip() == ">CLIENT:ENV,END")
 
     @classmethod
@@ -77,7 +79,8 @@ class ClientEvent(events.BaseEvent):
             raise errors.ParseError("Syntax error in first line of client event (Line: %s)" % first_line)
 
         first_line_data = match.groupdict()
-        client_id = int(first_line_data["client_id"]) if "client_id" in first_line_data else None
+        assert "client_id" in first_line_data, "unexpected CLIENT real-time message, cannot parse"
+        client_id = int(first_line_data["client_id"])
         key_id = int(first_line_data["key_id"]) if "key_id" in first_line_data else None
         primary = int(first_line_data["key_id"]) if "key_id" in first_line_data else None
         address = int(first_line_data["address"]) if "address" in first_line_data else None

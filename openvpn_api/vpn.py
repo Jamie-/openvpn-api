@@ -134,9 +134,9 @@ class VPN:
 
             if self._active_event is None:
                 for event in events.get_event_types():
-                    if event.is_input_began(line):
+                    if event.has_begun(line):
                         active_event_lines = []
-                        if event.is_input_ended(line):
+                        if event.has_ended(line):
                             self.raise_event(event.parse_raw([line]))
                         else:
                             self._socket_io_lock.acquire()
@@ -147,7 +147,7 @@ class VPN:
                     self._recv_queue.put(line)
             else:
                 active_event_lines.append(line)
-                if self._active_event.is_input_ended(line):
+                if self._active_event.has_ended(line):
                     self.raise_event(self._active_event.parse_raw(active_event_lines))
                     active_event_lines = []
                     self._active_event = None

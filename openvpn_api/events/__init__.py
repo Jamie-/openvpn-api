@@ -1,6 +1,6 @@
 import pathlib
 import importlib
-from typing import List
+from typing import List, Type
 
 from openvpn_api.events.base import BaseEvent
 
@@ -8,14 +8,14 @@ from openvpn_api.events.base import BaseEvent
 _events = []
 
 
-def register_event(event_type: BaseEvent) -> BaseEvent:
+def register_event(event_type: Type[BaseEvent]) -> Type[BaseEvent]:
     """Register an event handler."""
     if event_type not in _events:
         _events.append(event_type)
     return event_type
 
 
-def get_event_types() -> List[BaseEvent]:
+def get_event_types() -> List[Type[BaseEvent]]:
     """Get all registered event types."""
     return _events.copy()
 
